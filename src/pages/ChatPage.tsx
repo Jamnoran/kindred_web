@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { FormEvent } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
-import { chat } from "../api/endpoints";
+import { chat, uploadPhotoBytes } from "../api/endpoints";
 import { ApiError, errorMessage } from "../api/http";
 import type { ChatEvent, Conversation, Message } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 import { BlurhashImage } from "../components/BlurhashImage";
+import { ChatMediaImage } from "../components/ChatMediaImage";
 import { onConnected, sendTyping, subscribeConversation } from "../realtime/stomp";
 
 const PAGE_SIZE = 50;
 const TYPING_THROTTLE_MS = 3000;
 const TYPING_EXPIRE_MS = 5000;
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 /** Merge two batches, dedupe by id (REST + socket echo overlap), ascending. */
 function mergeMessages(a: Message[], b: Message[]): Message[] {
@@ -31,12 +33,15 @@ export function ChatPage() {
   const [gone, setGone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const [otherTyping, setOtherTyping] = useState(false);
   const [sending, setSending] = useState(false);
 
   const typingExpireTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const lastTypingSentAt = useRef(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleError = useCallback((err: unknown) => {
     // 404 = not a member / deleted — indistinguishable by design.
@@ -116,6 +121,30 @@ export function ChatPage() {
             );
           }
           break;
+        case "media":
+          // An image finished processing (approved/rejected) — patch the
+          // message that carries it. nsfw may be true here: ChatMediaImage
+          // keeps the blurhash until the viewer taps.
+          if (event.media) {
+            const processed = event.media;
+            setMessages((current) =>
+              current.map((m) =>
+                m.media?.id === processed.id ? { ...m, media: processed } : m,
+              ),
+            );
+          }
+          break;
+        case "presence":
+          if (event.online !== null && event.presenceUserId !== null) {
+            const presenceUserId = event.presenceUserId;
+            const online = event.online;
+            setConversation((current) =>
+              current && current.otherUser.userId === presenceUserId
+                ? { ...current, otherUser: { ...current.otherUser, online } }
+                : current,
+            );
+          }
+          break;
         default:
           // Unknown event types (future features) must be ignored.
           break;
@@ -124,6 +153,17 @@ export function ChatPage() {
   }, [conversation, conversationId, myId]);
 
   useEffect(() => () => clearTimeout(typingExpireTimer.current), []);
+
+  // Local object-URL preview for the picked attachment.
+  useEffect(() => {
+    if (!attachment) {
+      setAttachmentPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(attachment);
+    setAttachmentPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [attachment]);
 
   // Scroll only the message pane — scrollIntoView would also scroll the
   // page itself and hide the conversation header on mobile.
@@ -143,17 +183,41 @@ export function ChatPage() {
     }
   }
 
+  function onPickImage(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-picking the same file
+    if (!file) return;
+    if (!IMAGE_TYPES.includes(file.type)) {
+      setError("Only JPEG, PNG or WebP images can be sent.");
+      return;
+    }
+    setError(null);
+    setAttachment(file);
+  }
+
   async function onSend(e: FormEvent) {
     e.preventDefault();
     const body = draft.trim();
-    if (!body || sending) return;
+    if ((!body && !attachment) || sending) return;
     setSending(true);
     setError(null);
     try {
+      // Image first: presign scoped to this conversation, PUT the raw bytes
+      // to storage, then reference the (single-use) key on the message.
+      let mediaStorageKey: string | undefined;
+      if (attachment) {
+        const presigned = await chat.presignMedia(conversationId, attachment.type);
+        await uploadPhotoBytes(presigned.uploadUrl, attachment);
+        mediaStorageKey = presigned.storageKey;
+      }
       // Sends go through REST; the socket echo is deduped by id.
-      const sent = await chat.send(conversationId, body);
+      const sent = await chat.send(conversationId, {
+        ...(body ? { body } : {}),
+        ...(mediaStorageKey ? { mediaStorageKey } : {}),
+      });
       setMessages((current) => mergeMessages(current, [sent]));
       setDraft("");
+      setAttachment(null);
     } catch (err) {
       handleError(err);
     } finally {
@@ -198,15 +262,22 @@ export function ChatPage() {
         <Link to="/chats" className="back" aria-label="Back to chats">
           ←
         </Link>
-        <BlurhashImage
-          blurhash={other.photo?.blurhash}
-          src={other.photo?.urls?.thumb}
-          alt={other.displayName}
-          className="avatar avatar-sm"
-        />
+        <div className="avatar-wrap">
+          <BlurhashImage
+            blurhash={other.photo?.blurhash}
+            src={other.photo?.urls?.thumb}
+            alt={other.displayName}
+            className="avatar avatar-sm"
+          />
+          {other.online && <span className="online-dot" aria-label="Online" />}
+        </div>
         <div className="chat-header-text">
           <strong>{other.displayName}</strong>
-          {otherTyping && <span className="muted typing">typing…</span>}
+          {otherTyping ? (
+            <span className="muted typing">typing…</span>
+          ) : other.online ? (
+            <span className="presence-label">Online</span>
+          ) : null}
         </div>
       </header>
 
@@ -219,7 +290,8 @@ export function ChatPage() {
         {messages.map((m) => (
           <div key={m.id} className={`bubble-row ${m.senderId === myId ? "mine" : "theirs"}`}>
             <div className="bubble">
-              <p>{m.body}</p>
+              {m.media && <ChatMediaImage conversationId={conversationId} media={m.media} />}
+              {m.body && <p>{m.body}</p>}
               <span className="bubble-meta">
                 {dayFormat.format(new Date(m.createdAt))}
                 {m.id === lastOwnRead?.id && " · Read"}
@@ -231,15 +303,46 @@ export function ChatPage() {
 
       {error && <p className="error">{error}</p>}
 
+      {attachmentPreview && (
+        <div className="compose-attachment">
+          <img src={attachmentPreview} alt="Selected image" />
+          <span className="muted">{attachment?.name}</span>
+          <button
+            type="button"
+            className="link-button"
+            onClick={() => setAttachment(null)}
+            disabled={sending}
+          >
+            Remove
+          </button>
+        </div>
+      )}
+
       <form className="chat-compose" onSubmit={onSend}>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={IMAGE_TYPES.join(",")}
+          onChange={onPickImage}
+          hidden
+        />
+        <button
+          type="button"
+          className="secondary attach-button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={sending}
+          aria-label="Attach an image"
+        >
+          📷
+        </button>
         <input
           value={draft}
           onChange={(e) => onDraftChange(e.target.value)}
           placeholder={`Message ${other.displayName}…`}
           maxLength={2000}
         />
-        <button type="submit" disabled={sending || !draft.trim()}>
-          Send
+        <button type="submit" disabled={sending || (!draft.trim() && !attachment)}>
+          {sending ? "Sending…" : "Send"}
         </button>
       </form>
     </div>

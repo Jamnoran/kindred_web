@@ -143,10 +143,40 @@ export interface NearbyProfile {
   distanceKm: number;
 }
 
+export type ChatMediaStatus = "pending" | "approved" | "rejected";
+
+/**
+ * Image attached to a chat message. Bytes are never public: fetch short-lived
+ * signed URLs per view via GET /conversations/{id}/media/{mediaId}.
+ * When `nsfw` is true the client MUST NOT fetch the bytes until the viewer
+ * explicitly taps to reveal — render only the blurhash.
+ */
+export interface ChatMediaSummary {
+  id: number;
+  status: ChatMediaStatus;
+  nsfw: boolean;
+  blurhash: string | null;
+}
+
+export interface ChatMediaUploadResponse {
+  uploadUrl: string;
+  storageKey: string;
+  expiresAt: string;
+}
+
+export interface ChatMediaUrlsResponse {
+  mediaId: number;
+  urls: PhotoUrls;
+  /** Signed URLs expire ~5 min after issue; refetch instead of persisting. */
+  expiresAt: string;
+}
+
 export interface Message {
   id: number;
   senderId: number;
-  body: string;
+  /** Null for media-only messages. */
+  body: string | null;
+  media: ChatMediaSummary | null;
   createdAt: string;
   readAt: string | null;
 }
@@ -155,6 +185,8 @@ export interface ConversationParticipant {
   userId: number;
   displayName: string;
   photo: PhotoSummary | null;
+  /** Initial presence; kept live by "presence" ChatEvents while subscribed. */
+  online: boolean;
 }
 
 export interface Conversation {
@@ -168,11 +200,16 @@ export interface Conversation {
 
 /** One frame on /topic/conversations/{id}. Unknown types must be ignored. */
 export interface ChatEvent {
-  type: "message" | "read" | "typing" | (string & {});
+  type: "message" | "read" | "typing" | "media" | "presence" | (string & {});
   conversationId: number;
   message: Message | null;
   readerId: number | null;
   typingUserId: number | null;
+  /** "media" events: an image finished processing (approved/rejected). */
+  media: ChatMediaSummary | null;
+  /** "presence" events: presenceUserId went online/offline. */
+  presenceUserId: number | null;
+  online: boolean | null;
 }
 
 /** RFC 7807 problem detail. */

@@ -6,6 +6,8 @@ interface Props {
   src?: string | null;
   alt: string;
   className?: string;
+  /** e.g. an expired signed URL — caller can refetch and swap `src`. */
+  onError?: () => void;
 }
 
 /**
@@ -13,7 +15,7 @@ interface Props {
  * that have no URL yet, e.g. pending moderation), swapping in the real image
  * once it loads.
  */
-export function BlurhashImage({ blurhash, src, alt, className }: Props) {
+export function BlurhashImage({ blurhash, src, alt, className, onError }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -40,6 +42,7 @@ export function BlurhashImage({ blurhash, src, alt, className }: Props) {
           src={src}
           alt={alt}
           onLoad={() => setLoaded(true)}
+          onError={onError}
           style={{ opacity: loaded ? 1 : 0 }}
         />
       )}

@@ -779,6 +779,27 @@ legend {
   min-width: 38px;
 }
 
+.avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.online-dot {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--success);
+  border: 2.5px solid var(--surface);
+}
+
+.presence-label {
+  font-size: 0.8rem;
+  color: var(--success);
+}
+
 .conversation-text {
   display: flex;
   flex-direction: column;
@@ -903,6 +924,83 @@ legend {
   text-align: right;
 }
 
+/* ---------- chat images ---------- */
+
+.bubble-media {
+  position: relative;
+  width: min(240px, 58vw);
+  margin: 0.1rem 0 0.3rem;
+}
+
+.bubble-media .blurhash-frame {
+  border-radius: 12px;
+}
+
+.media-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #fff;
+  background: rgba(10, 6, 16, 0.35);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+/* NSFW: only the blurhash shows until this is tapped (client-enforced). */
+.media-reveal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  width: 100%;
+  border-radius: 12px;
+  background: rgba(10, 6, 16, 0.45);
+  color: #fff;
+  font-size: 0.9rem;
+  box-shadow: none;
+}
+
+.media-reveal small {
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.media-removed {
+  font-size: 0.85rem;
+  font-style: italic;
+  opacity: 0.75;
+  padding: 0.3rem 0;
+}
+
+.compose-attachment {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.2rem 0;
+  font-size: 0.85rem;
+  min-width: 0;
+}
+
+.compose-attachment img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.compose-attachment span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .chat-compose {
   display: flex;
   gap: 0.5rem;
@@ -913,6 +1011,13 @@ legend {
 
 .chat-compose input {
   border-radius: 999px;
+}
+
+.attach-button {
+  width: 44px;
+  min-width: 44px;
+  padding: 0;
+  font-size: 1.1rem;
 }
 
 .empty-state {
