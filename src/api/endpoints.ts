@@ -1,5 +1,7 @@
 import { api } from "./http";
 import type {
+  ChatMediaUploadResponse,
+  ChatMediaUrlsResponse,
   Conversation,
   DiscoveryCard,
   Interest,
@@ -57,7 +59,10 @@ export const photos = {
   remove: (id: number) => api<null>(`/photos/${id}`, { method: "DELETE" }),
 };
 
-/** Step 2 of the pipeline: raw bytes to object storage — no cookies, no CSRF. */
+/**
+ * Step 2 of both media pipelines (profile photos and chat images):
+ * raw bytes to object storage — no cookies, no CSRF.
+ */
 export async function uploadPhotoBytes(uploadUrl: string, file: File): Promise<void> {
   const res = await fetch(uploadUrl, {
     method: "PUT",
@@ -86,11 +91,24 @@ export const chat = {
     api<Message[]>(
       `/conversations/${conversationId}/messages?limit=${limit}${before ? `&before=${before}` : ""}`,
     ),
-  send: (conversationId: number, body: string) =>
+  /** At least one of body / mediaStorageKey is required. */
+  send: (conversationId: number, message: { body?: string; mediaStorageKey?: string }) =>
     api<Message>(`/conversations/${conversationId}/messages`, {
       method: "POST",
-      body: { body },
+      body: message,
     }),
   markRead: (conversationId: number) =>
     api<{ markedRead: number }>(`/conversations/${conversationId}/read`, { method: "POST" }),
+  /** Chat image step 1: presign an upload scoped to this conversation. */
+  presignMedia: (conversationId: number, contentType: string) =>
+    api<ChatMediaUploadResponse>(`/conversations/${conversationId}/media-uploads`, {
+      method: "POST",
+      body: { contentType },
+    }),
+  /**
+   * Signed display URLs for an approved image; they expire in ~5 minutes, so
+   * fetch on view and refetch after expiry. 409 = still processing, 404 = gone.
+   */
+  mediaUrls: (conversationId: number, mediaId: number) =>
+    api<ChatMediaUrlsResponse>(`/conversations/${conversationId}/media/${mediaId}`),
 };

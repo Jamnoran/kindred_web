@@ -40,10 +40,19 @@ build time if the API is not on the app's own origin.
   straight into the already-created conversation.
 - **Preferences** — read-modify-write full replace of filters + scoring weights.
 - **Chat** — REST for history (newest-first keyset pagination) and sends;
-  STOMP over `/ws` (`src/realtime/stomp.ts`) for message/read/typing events with
-  auto-reconnect, REST re-sync on every (re)connect (the relay has no replay),
-  dedupe by message id, throttled typing signals, client-side typing expiry,
-  and unknown event types ignored.
+  STOMP over `/ws` (`src/realtime/stomp.ts`) for message/read/typing/media/presence
+  events with auto-reconnect, REST re-sync on every (re)connect (the relay has
+  no replay), dedupe by message id, throttled typing signals, client-side typing
+  expiry, and unknown event types ignored.
+- **Chat images** — presign scoped to the conversation → direct `PUT` to
+  storage → message with `mediaStorageKey`; pending placeholder until the
+  `media` event resolves to approved/rejected. Bytes are private: signed URLs
+  (~5 min) are fetched per view when the image scrolls into sight and refetched
+  on expiry (`src/components/ChatMediaImage.tsx`). NSFW images render only the
+  blurhash until explicitly tapped — per image, never fetched early — and the
+  conversation list shows a generic "Photo" label instead of any thumbnail.
+- **Presence** — `online` flag from `GET /conversations` shown as a dot in the
+  list and chat header, kept live by `presence` events while subscribed.
 
 ## API types
 
