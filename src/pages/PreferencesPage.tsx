@@ -3,6 +3,8 @@ import type { FormEvent } from "react";
 import { discovery } from "../api/endpoints";
 import { errorMessage } from "../api/http";
 import type { PreferencesResponse } from "../api/types";
+import { getStoredTheme, setTheme } from "../theme";
+import type { Theme } from "../theme";
 
 const LOOKING_FOR_OPTIONS = ["relationship", "casual", "friendship", "unsure"];
 const WEIGHT_KEYS: { key: string; label: string }[] = [
@@ -20,6 +22,13 @@ export function PreferencesPage() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
+  // stored on this device only, not part of the server-side preferences
+  const [theme, setThemeState] = useState<Theme>(getStoredTheme);
+
+  function onThemeChange(next: Theme) {
+    setTheme(next);
+    setThemeState(next);
+  }
 
   useEffect(() => {
     discovery
@@ -66,6 +75,23 @@ export function PreferencesPage() {
   return (
     <div className="page">
       <h2>Preferences</h2>
+      <div className="card form">
+        <fieldset>
+          <legend>Appearance</legend>
+          <div className="chip-row">
+            {(["dark", "light"] as const).map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                className={`chip ${theme === opt ? "chip-on" : ""}`}
+                onClick={() => onThemeChange(opt)}
+              >
+                {opt === "dark" ? "Dark (default)" : "Light"}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      </div>
       <form className="card form" onSubmit={onSave}>
         <label>
           Maximum distance: {prefs.distanceKm} km

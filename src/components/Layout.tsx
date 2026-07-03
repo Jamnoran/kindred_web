@@ -29,7 +29,10 @@ export function ProtectedLayout() {
   return (
     <div className="app-shell">
       <header className="top-bar">
-        <span className="nav-brand">Kindred</span>
+        <span className="nav-brand">
+          <Icon name="heart" size={18} />
+          Kindred
+        </span>
         <nav className="top-links">
           {TABS.map((tab) => (
             <NavLink key={tab.to} to={tab.to} end={tab.end}>

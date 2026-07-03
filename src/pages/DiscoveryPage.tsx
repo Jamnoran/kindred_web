@@ -55,7 +55,8 @@ export function DiscoveryPage() {
       {match && (
         <div className="modal-backdrop" onClick={() => setMatch(null)}>
           <div className="card modal" onClick={(e) => e.stopPropagation()}>
-            <h2>It's a match! 🎉</h2>
+            <div className="match-hearts">💞</div>
+            <h2>It's a match!</h2>
             <p>You and {match.name} liked each other.</p>
             {match.conversationId != null ? (
               <Link className="button" to={`/chats/${match.conversationId}`}>
@@ -77,25 +78,32 @@ export function DiscoveryPage() {
 
       {!card && !loading && (
         <div className="card empty-state">
+          <div className="empty-state-emoji">💫</div>
           <h2>No one new right now</h2>
-          <p>Widen your preferences or check back later.</p>
+          <p className="muted">Widen your preferences or check back later.</p>
           <button onClick={loadDeck}>Refresh</button>
         </div>
       )}
 
       {card && (
         <div className="card discovery-card">
-          <BlurhashImage
-            blurhash={card.photo?.blurhash}
-            src={card.photo?.urls?.card}
-            alt={card.displayName}
-            className="discovery-photo"
-          />
+          <div className="discovery-photo-wrap">
+            <BlurhashImage
+              blurhash={card.photo?.blurhash}
+              src={card.photo?.urls?.card}
+              alt={card.displayName}
+              className="discovery-photo"
+            />
+            <div className="discovery-overlay">
+              <h2>
+                {card.displayName}, {card.age}
+              </h2>
+              {card.distanceKm != null && (
+                <span className="distance">{card.distanceKm} km away</span>
+              )}
+            </div>
+          </div>
           <div className="discovery-body">
-            <h2>
-              {card.displayName}, {card.age}
-              {card.distanceKm != null && <span className="muted"> · {card.distanceKm} km</span>}
-            </h2>
             {card.bio && <p>{card.bio}</p>}
             {card.lookingFor.length > 0 && (
               <p className="muted">Looking for: {card.lookingFor.join(", ")}</p>
@@ -115,14 +123,32 @@ export function DiscoveryPage() {
             <WhyThisPerson factors={card.whyThisPerson} />
           </div>
           <div className="react-row">
-            <button className="react pass" disabled={busy} onClick={() => react("pass")}>
-              ✕ Pass
+            <button
+              className="react pass"
+              aria-label="Pass"
+              title="Pass"
+              disabled={busy}
+              onClick={() => react("pass")}
+            >
+              ✕
             </button>
-            <button className="react like" disabled={busy} onClick={() => react("like")}>
-              ♥ Like
+            <button
+              className="react like"
+              aria-label="Like"
+              title="Like"
+              disabled={busy}
+              onClick={() => react("like")}
+            >
+              ♥
             </button>
-            <button className="react superlike" disabled={busy} onClick={() => react("superlike")}>
-              ★ Superlike
+            <button
+              className="react superlike"
+              aria-label="Superlike"
+              title="Superlike"
+              disabled={busy}
+              onClick={() => react("superlike")}
+            >
+              ★
             </button>
           </div>
         </div>
