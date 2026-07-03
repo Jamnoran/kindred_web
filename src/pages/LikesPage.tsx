@@ -57,7 +57,7 @@ export function LikesPage() {
                 {like.kind === "superlike" ? "★ superliked you" : "♥ liked you"} ·{" "}
                 {new Date(like.likedAt).toLocaleDateString()}
               </span>
-              <button onClick={() => likeBack(like)}>Like back</button>
+              <button onClick={() => likeBack(like)}>♥ Like back</button>
             </div>
           </div>
         ))}

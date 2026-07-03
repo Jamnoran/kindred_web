@@ -44,6 +44,7 @@ export function SignupPage() {
   return (
     <div className="auth-page">
       <h1>Kindred</h1>
+      <p className="tagline">Find your kindred spirit</p>
       <form className="card form" onSubmit={onSubmit}>
         <h2>Sign up</h2>
         <label>

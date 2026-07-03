@@ -2,9 +2,11 @@
 :root {
   --bg: #17131f;
   --surface: #221c30;
+  --surface-2: #2a2340;
   --text: #ece8f4;
   --muted: #a79dbd;
   --accent: #e0446c;
+  --accent-2: #f27a59;
   --accent-soft: #3e2233;
   --border: #383049;
   --success: #4cc38a;
@@ -12,16 +14,23 @@
   --warn-soft: #3d3420;
   --warn-text: #d9b45a;
   --danger-soft: #46231f;
-  --backdrop: rgba(0, 0, 0, 0.6);
+  --backdrop: rgba(10, 6, 16, 0.65);
+  --grad: linear-gradient(135deg, #f27a59 0%, #e0446c 55%, #c93f8f 100%);
+  --accent-glow: rgba(224, 68, 108, 0.4);
+  --accent-ring: rgba(224, 68, 108, 0.3);
+  --shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.55);
+  --glow: radial-gradient(900px 480px at 50% -12%, rgba(224, 68, 108, 0.1), transparent 65%);
   color-scheme: dark;
 }
 
 :root[data-theme="light"] {
   --bg: #faf7f5;
   --surface: #ffffff;
+  --surface-2: #f6f1f3;
   --text: #2b2440;
   --muted: #7a7290;
   --accent: #e0446c;
+  --accent-2: #f27a59;
   --accent-soft: #fbe3ea;
   --border: #e7e1ee;
   --success: #1c7c54;
@@ -30,6 +39,10 @@
   --warn-text: #8a6d1a;
   --danger-soft: #fbe0dc;
   --backdrop: rgba(43, 36, 64, 0.5);
+  --accent-glow: rgba(224, 68, 108, 0.3);
+  --accent-ring: rgba(224, 68, 108, 0.22);
+  --shadow: 0 10px 30px -18px rgba(43, 36, 64, 0.28);
+  --glow: radial-gradient(900px 480px at 50% -12%, rgba(224, 68, 108, 0.06), transparent 65%);
   color-scheme: light;
 }
 
@@ -46,13 +59,15 @@ body,
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  background: var(--bg);
+  background: var(--glow), var(--bg);
+  background-attachment: fixed;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3 {
   margin: 0 0 0.5rem;
+  letter-spacing: -0.015em;
 }
 
 a {
@@ -61,15 +76,28 @@ a {
 
 button, .button {
   font: inherit;
+  font-weight: 600;
   border: none;
   border-radius: 999px;
   padding: 0.7rem 1.3rem;
-  background: var(--accent);
+  background: var(--grad);
   color: #fff;
   cursor: pointer;
   text-decoration: none;
   text-align: center;
   min-height: 44px; /* comfortable touch target */
+  box-shadow: 0 4px 14px -4px var(--accent-glow);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+button:hover:not(:disabled), .button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px -4px var(--accent-glow);
+}
+
+button:active:not(:disabled), .button:active {
+  transform: translateY(0);
+  filter: brightness(0.96);
 }
 
 button:disabled {
@@ -77,9 +105,15 @@ button:disabled {
   cursor: default;
 }
 
+button:focus-visible, .button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 button.secondary {
   background: var(--accent-soft);
   color: var(--accent);
+  box-shadow: none;
 }
 
 .link-button {
@@ -88,7 +122,14 @@ button.secondary {
   padding: 0;
   border-radius: 0;
   min-height: 0;
+  font-weight: 500;
   text-decoration: underline;
+  box-shadow: none;
+}
+
+.link-button:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
 }
 
 .link-button.danger {
@@ -100,9 +141,17 @@ input, textarea, select {
   font-size: 16px; /* <16px triggers focus zoom on iOS Safari */
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--surface);
+  color: var(--text);
   width: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
 input[type="range"] {
@@ -110,6 +159,10 @@ input[type="range"] {
   border: none;
   accent-color: var(--accent);
   min-height: 32px;
+}
+
+input[type="range"]:focus {
+  box-shadow: none;
 }
 
 label {
@@ -121,10 +174,19 @@ label {
 
 fieldset {
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
+}
+
+legend {
+  padding: 0 0.4rem;
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 /* ---------- app shell: fixed viewport height, only <main> scrolls ---------- */
@@ -147,9 +209,21 @@ fieldset {
 }
 
 .nav-brand {
-  font-weight: 700;
-  color: var(--accent);
-  font-size: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.nav-brand svg {
+  stroke: var(--accent);
+  fill: var(--accent);
 }
 
 .top-links {
@@ -164,11 +238,17 @@ fieldset {
   padding: 0.35rem 0.7rem;
   border-radius: 999px;
   font-size: 0.95rem;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.top-links a:hover {
+  color: var(--text);
 }
 
 .top-links a.active {
   color: var(--accent);
   background: var(--accent-soft);
+  font-weight: 600;
 }
 
 .main {
@@ -201,10 +281,20 @@ fieldset {
   text-decoration: none;
   color: var(--muted);
   font-size: 0.68rem;
+  transition: color 0.15s ease, transform 0.15s ease;
 }
 
 .tab-bar a.active {
   color: var(--accent);
+  font-weight: 600;
+}
+
+.tab-bar a.active svg {
+  transform: scale(1.1);
+}
+
+.tab-bar svg {
+  transition: transform 0.15s ease;
 }
 
 @media (max-width: 719px) {
@@ -243,8 +333,9 @@ fieldset {
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 1.2rem;
+  box-shadow: var(--shadow);
 }
 
 .form {
@@ -284,12 +375,25 @@ fieldset {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  gap: 0.4rem;
   padding: 1rem;
 }
 
 .auth-page h1 {
-  color: var(--accent);
+  margin: 0;
+  font-size: 2.6rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.tagline {
+  margin: 0 0 1.1rem;
+  color: var(--muted);
+  font-size: 1rem;
 }
 
 .auth-page .card {
@@ -306,18 +410,24 @@ fieldset {
 }
 
 .chip {
-  background: var(--bg);
+  display: inline-flex;
+  align-items: center;
+  background: var(--surface-2);
   color: var(--muted);
   border: 1px solid var(--border);
+  border-radius: 999px;
   padding: 0.4rem 0.85rem;
   font-size: 0.85rem;
+  font-weight: 500;
   min-height: 36px;
+  box-shadow: none;
 }
 
 .chip-on {
   background: var(--accent-soft);
   color: var(--accent);
   border-color: var(--accent);
+  font-weight: 600;
 }
 
 /* ---------- blurhash ---------- */
@@ -325,7 +435,7 @@ fieldset {
 .blurhash-frame {
   position: relative;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: 14px;
   aspect-ratio: 4 / 5;
   background: var(--border);
 }
@@ -377,6 +487,7 @@ fieldset {
   color: var(--accent);
   border-radius: 999px;
   padding: 0.15rem 0.6rem;
+  font-weight: 600;
 }
 
 .badge.pending {
@@ -394,6 +505,22 @@ fieldset {
 .discovery-card {
   padding: 0;
   overflow: hidden;
+  animation: fade-up 0.3s ease;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.discovery-photo-wrap {
+  position: relative;
 }
 
 .discovery-photo {
@@ -407,38 +534,105 @@ fieldset {
   }
 }
 
+/* name + distance overlaid on the photo, dating-app style */
+.discovery-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 3rem 1.2rem 0.9rem;
+  background: linear-gradient(180deg, transparent, rgba(10, 6, 16, 0.55) 45%, rgba(10, 6, 16, 0.85));
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.discovery-overlay h2 {
+  margin: 0;
+  font-size: 1.55rem;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+}
+
+.discovery-overlay .distance {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
 .discovery-body {
-  padding: 1rem 1.1rem;
+  padding: 1rem 1.1rem 0.6rem;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
 }
 
+.discovery-body p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* circular reaction buttons — pass / superlike / like */
 .react-row {
   display: flex;
-  gap: 0.6rem;
-  padding: 0 1.1rem 1.1rem;
+  gap: 1.2rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1.1rem 1.3rem;
 }
 
 .react {
-  flex: 1;
-  min-height: 50px;
+  flex: 0 0 auto;
+  width: 58px;
+  height: 58px;
+  min-height: 0;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.35rem;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.react:hover:not(:disabled) {
+  transform: scale(1.08);
 }
 
 .react.pass {
-  background: var(--bg);
+  background: var(--surface);
   color: var(--muted);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow);
 }
 
 .react.superlike {
-  background: #4a5ae8;
+  background: var(--surface);
+  color: #7c8cf8;
+  border: 1.5px solid #7c8cf8;
+  box-shadow: 0 4px 14px -4px rgba(124, 140, 248, 0.4);
+}
+
+.react.like {
+  width: 72px;
+  height: 72px;
+  font-size: 1.8rem;
+  background: var(--grad);
+  color: #fff;
+  box-shadow: 0 6px 22px -4px var(--accent-glow);
+}
+
+.why {
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 0.75rem 0.9rem;
 }
 
 .why summary {
   cursor: pointer;
   color: var(--accent);
+  font-weight: 600;
+  font-size: 0.92rem;
 }
 
 .why ul {
@@ -459,14 +653,15 @@ fieldset {
 
 .meter {
   height: 6px;
-  background: var(--bg);
+  background: var(--border);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .meter-fill {
   height: 100%;
-  background: var(--accent);
+  background: var(--grad);
+  border-radius: 3px;
 }
 
 /* ---------- modal ---------- */
@@ -475,6 +670,8 @@ fieldset {
   position: fixed;
   inset: 0;
   background: var(--backdrop);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -489,6 +686,30 @@ fieldset {
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+  animation: pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.match-hearts {
+  font-size: 2.6rem;
+  line-height: 1;
+}
+
+.modal h2 {
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* ---------- likes ---------- */
@@ -512,6 +733,10 @@ fieldset {
   gap: 0.45rem;
 }
 
+.like-body .muted {
+  font-size: 0.8rem;
+}
+
 /* ---------- conversations ---------- */
 
 .conversation-list {
@@ -529,10 +754,17 @@ fieldset {
   gap: 0.8rem;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 0.75rem 0.9rem;
   text-decoration: none;
   color: inherit;
+  box-shadow: var(--shadow);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.conversation-item:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
 }
 
 .avatar {
@@ -563,7 +795,7 @@ fieldset {
 }
 
 .unread-badge {
-  background: var(--accent);
+  background: var(--grad);
   color: #fff;
   border-radius: 999px;
   min-width: 1.5rem;
@@ -572,6 +804,7 @@ fieldset {
   align-items: center;
   justify-content: center;
   font-size: 0.8rem;
+  font-weight: 700;
   padding: 0 0.4rem;
 }
 
@@ -610,6 +843,7 @@ fieldset {
 .typing {
   font-size: 0.8rem;
   font-style: italic;
+  color: var(--accent);
 }
 
 .chat-scroll {
@@ -639,7 +873,7 @@ fieldset {
 .bubble {
   max-width: 80%;
   padding: 0.55rem 0.85rem;
-  border-radius: 16px;
+  border-radius: 18px;
   background: var(--surface);
   border: 1px solid var(--border);
 }
@@ -651,8 +885,8 @@ fieldset {
 }
 
 .mine .bubble {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--grad);
+  border: none;
   color: #fff;
   border-bottom-right-radius: 4px;
 }
@@ -687,4 +921,10 @@ fieldset {
   flex-direction: column;
   gap: 0.6rem;
   align-items: center;
+  padding: 2.4rem 1.4rem;
+}
+
+.empty-state-emoji {
+  font-size: 2.2rem;
+  line-height: 1;
 }
