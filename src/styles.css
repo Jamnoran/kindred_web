@@ -1,4 +1,22 @@
+/* dark is the default theme */
 :root {
+  --bg: #17131f;
+  --surface: #221c30;
+  --text: #ece8f4;
+  --muted: #a79dbd;
+  --accent: #e0446c;
+  --accent-soft: #3e2233;
+  --border: #383049;
+  --success: #4cc38a;
+  --danger: #ff7263;
+  --warn-soft: #3d3420;
+  --warn-text: #d9b45a;
+  --danger-soft: #46231f;
+  --backdrop: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
   --bg: #faf7f5;
   --surface: #ffffff;
   --text: #2b2440;
@@ -8,6 +26,10 @@
   --border: #e7e1ee;
   --success: #1c7c54;
   --danger: #c0392b;
+  --warn-soft: #fdf3d7;
+  --warn-text: #8a6d1a;
+  --danger-soft: #fbe0dc;
+  --backdrop: rgba(43, 36, 64, 0.5);
   color-scheme: light;
 }
 
@@ -358,12 +380,12 @@ fieldset {
 }
 
 .badge.pending {
-  background: #fdf3d7;
-  color: #8a6d1a;
+  background: var(--warn-soft);
+  color: var(--warn-text);
 }
 
 .badge.rejected {
-  background: #fbe0dc;
+  background: var(--danger-soft);
   color: var(--danger);
 }
 
@@ -452,7 +474,7 @@ fieldset {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(43, 36, 64, 0.5);
+  background: var(--backdrop);
   display: flex;
   align-items: center;
   justify-content: center;
