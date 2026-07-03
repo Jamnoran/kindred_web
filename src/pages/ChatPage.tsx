@@ -5,6 +5,7 @@ import { chat } from "../api/endpoints";
 import { ApiError, errorMessage } from "../api/http";
 import type { ChatEvent, Conversation, Message } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
+import { BlurhashImage } from "../components/BlurhashImage";
 import { onConnected, sendTyping, subscribeConversation } from "../realtime/stomp";
 
 const PAGE_SIZE = 50;
@@ -35,7 +36,7 @@ export function ChatPage() {
 
   const typingExpireTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const lastTypingSentAt = useRef(0);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const handleError = useCallback((err: unknown) => {
     // 404 = not a member / deleted — indistinguishable by design.
@@ -124,8 +125,11 @@ export function ChatPage() {
 
   useEffect(() => () => clearTimeout(typingExpireTimer.current), []);
 
+  // Scroll only the message pane — scrollIntoView would also scroll the
+  // page itself and hide the conversation header on mobile.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const pane = scrollRef.current;
+    if (pane) pane.scrollTop = pane.scrollHeight;
   }, [messages.length, otherTyping]);
 
   async function loadOlder() {
@@ -191,12 +195,22 @@ export function ChatPage() {
   return (
     <div className="chat-page">
       <header className="chat-header">
-        <Link to="/chats">←</Link>
-        <strong>{other.displayName}</strong>
-        {otherTyping && <span className="muted typing">typing…</span>}
+        <Link to="/chats" className="back" aria-label="Back to chats">
+          ←
+        </Link>
+        <BlurhashImage
+          blurhash={other.photo?.blurhash}
+          src={other.photo?.urls?.thumb}
+          alt={other.displayName}
+          className="avatar avatar-sm"
+        />
+        <div className="chat-header-text">
+          <strong>{other.displayName}</strong>
+          {otherTyping && <span className="muted typing">typing…</span>}
+        </div>
       </header>
 
-      <div className="chat-scroll">
+      <div className="chat-scroll" ref={scrollRef}>
         {hasMore && (
           <button className="link-button load-older" onClick={loadOlder}>
             Load older messages
@@ -213,7 +227,6 @@ export function ChatPage() {
             </div>
           </div>
         ))}
-        <div ref={bottomRef} />
       </div>
 
       {error && <p className="error">{error}</p>}

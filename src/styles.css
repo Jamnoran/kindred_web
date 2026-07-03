@@ -15,17 +15,18 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--text);
-}
-
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3 {
@@ -40,12 +41,13 @@ button, .button {
   font: inherit;
   border: none;
   border-radius: 999px;
-  padding: 0.6rem 1.2rem;
+  padding: 0.7rem 1.3rem;
   background: var(--accent);
   color: #fff;
   cursor: pointer;
   text-decoration: none;
   text-align: center;
+  min-height: 44px; /* comfortable touch target */
 }
 
 button:disabled {
@@ -63,6 +65,7 @@ button.secondary {
   color: var(--accent);
   padding: 0;
   border-radius: 0;
+  min-height: 0;
   text-decoration: underline;
 }
 
@@ -72,11 +75,19 @@ button.secondary {
 
 input, textarea, select {
   font: inherit;
-  padding: 0.55rem 0.7rem;
+  font-size: 16px; /* <16px triggers focus zoom on iOS Safari */
+  padding: 0.6rem 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--surface);
   width: 100%;
+}
+
+input[type="range"] {
+  padding: 0;
+  border: none;
+  accent-color: var(--accent);
+  min-height: 32px;
 }
 
 label {
@@ -89,58 +100,107 @@ label {
 fieldset {
   border: 1px solid var(--border);
   border-radius: 10px;
-}
-
-.app-shell {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  gap: 0.7rem;
 }
 
-.nav {
+/* ---------- app shell: fixed viewport height, only <main> scrolls ---------- */
+
+.app-shell {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-bar {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.7rem 1rem;
+  gap: 1.2rem;
+  padding: 0.65rem 1rem;
+  padding-top: calc(0.65rem + env(safe-area-inset-top));
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-  position: sticky;
-  top: 0;
-  z-index: 5;
+  flex-shrink: 0;
 }
 
 .nav-brand {
   font-weight: 700;
   color: var(--accent);
-  font-size: 1.15rem;
+  font-size: 1.2rem;
 }
 
-.nav-links {
+.top-links {
   display: flex;
-  gap: 0.8rem;
+  gap: 0.6rem;
   flex: 1;
-  flex-wrap: wrap;
 }
 
-.nav-links a {
+.top-links a {
   text-decoration: none;
   color: var(--muted);
-  padding: 0.2rem 0.4rem;
-  border-radius: 6px;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
 }
 
-.nav-links a.active {
+.top-links a.active {
   color: var(--accent);
   background: var(--accent-soft);
 }
 
 .main {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.2rem 1rem 3rem;
+  padding: 1.2rem 1rem 2.5rem;
+}
+
+/* bottom tab bar — the primary navigation on phones */
+.tab-bar {
+  display: none;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tab-bar a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0.45rem 0 0.4rem;
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.tab-bar a.active {
+  color: var(--accent);
+}
+
+@media (max-width: 719px) {
+  .top-links {
+    display: none;
+  }
+
+  .top-bar {
+    justify-content: space-between;
+  }
+
+  .tab-bar {
+    display: flex;
+  }
+
+  .main {
+    padding: 0.9rem 0.9rem 1.5rem;
+  }
 }
 
 .page {
@@ -161,7 +221,7 @@ fieldset {
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 1.2rem;
 }
 
@@ -194,8 +254,10 @@ fieldset {
   color: var(--muted);
 }
 
+/* ---------- auth ---------- */
+
 .auth-page {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -213,18 +275,21 @@ fieldset {
   max-width: 380px;
 }
 
+/* ---------- chips ---------- */
+
 .chip-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
 .chip {
   background: var(--bg);
   color: var(--muted);
   border: 1px solid var(--border);
-  padding: 0.3rem 0.8rem;
+  padding: 0.4rem 0.85rem;
   font-size: 0.85rem;
+  min-height: 36px;
 }
 
 .chip-on {
@@ -233,11 +298,12 @@ fieldset {
   border-color: var(--accent);
 }
 
-/* blurhash */
+/* ---------- blurhash ---------- */
+
 .blurhash-frame {
   position: relative;
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 12px;
   aspect-ratio: 4 / 5;
   background: var(--border);
 }
@@ -258,14 +324,15 @@ fieldset {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
+  font-size: 1.6rem;
   color: var(--muted);
 }
 
-/* photos */
+/* ---------- photos ---------- */
+
 .photo-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 0.8rem;
 }
 
@@ -287,7 +354,7 @@ fieldset {
   background: var(--accent-soft);
   color: var(--accent);
   border-radius: 999px;
-  padding: 0.1rem 0.6rem;
+  padding: 0.15rem 0.6rem;
 }
 
 .badge.pending {
@@ -300,7 +367,8 @@ fieldset {
   color: var(--danger);
 }
 
-/* discovery */
+/* ---------- discovery ---------- */
+
 .discovery-card {
   padding: 0;
   overflow: hidden;
@@ -310,8 +378,15 @@ fieldset {
   border-radius: 0;
 }
 
+@media (min-width: 720px) {
+  .discovery-photo {
+    aspect-ratio: auto;
+    height: 460px;
+  }
+}
+
 .discovery-body {
-  padding: 1rem 1.2rem;
+  padding: 1rem 1.1rem;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -320,11 +395,13 @@ fieldset {
 .react-row {
   display: flex;
   gap: 0.6rem;
-  padding: 0 1.2rem 1.2rem;
+  padding: 0 1.1rem 1.1rem;
 }
 
 .react {
   flex: 1;
+  min-height: 50px;
+  font-weight: 600;
 }
 
 .react.pass {
@@ -370,7 +447,8 @@ fieldset {
   background: var(--accent);
 }
 
-/* modal */
+/* ---------- modal ---------- */
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -391,10 +469,11 @@ fieldset {
   gap: 0.8rem;
 }
 
-/* likes */
+/* ---------- likes ---------- */
+
 .likes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 0.8rem;
 }
 
@@ -408,10 +487,11 @@ fieldset {
 .like-body {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
-/* conversations */
+/* ---------- conversations ---------- */
+
 .conversation-list {
   list-style: none;
   margin: 0;
@@ -427,8 +507,8 @@ fieldset {
   gap: 0.8rem;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0.7rem 0.9rem;
+  border-radius: 14px;
+  padding: 0.75rem 0.9rem;
   text-decoration: none;
   color: inherit;
 }
@@ -438,6 +518,11 @@ fieldset {
   min-width: 52px;
   aspect-ratio: 1;
   border-radius: 50%;
+}
+
+.avatar-sm {
+  width: 38px;
+  min-width: 38px;
 }
 
 .conversation-text {
@@ -468,40 +553,52 @@ fieldset {
   padding: 0 0.4rem;
 }
 
-/* chat */
+/* ---------- chat ---------- */
+
 .chat-page {
   width: 100%;
   max-width: 640px;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 8rem);
 }
 
 .chat-header {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  padding: 0.6rem 0;
+  gap: 0.7rem;
+  padding: 0.2rem 0 0.6rem;
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
-.chat-header a {
+.chat-header .back {
   text-decoration: none;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
+  padding: 0.2rem 0.5rem;
+}
+
+.chat-header-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
 }
 
 .typing {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-style: italic;
 }
 
 .chat-scroll {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  padding: 0.8rem 0;
+  padding: 0.8rem 0.1rem;
 }
 
 .load-older {
@@ -518,9 +615,9 @@ fieldset {
 }
 
 .bubble {
-  max-width: 75%;
-  padding: 0.5rem 0.8rem;
-  border-radius: 14px;
+  max-width: 80%;
+  padding: 0.55rem 0.85rem;
+  border-radius: 16px;
   background: var(--surface);
   border: 1px solid var(--border);
 }
@@ -535,13 +632,18 @@ fieldset {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.theirs .bubble {
+  border-bottom-left-radius: 4px;
 }
 
 .bubble-meta {
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   opacity: 0.7;
-  margin-top: 0.2rem;
+  margin-top: 0.15rem;
   text-align: right;
 }
 
@@ -550,6 +652,11 @@ fieldset {
   gap: 0.5rem;
   padding-top: 0.6rem;
   border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.chat-compose input {
+  border-radius: 999px;
 }
 
 .empty-state {
