@@ -196,6 +196,13 @@ export interface Conversation {
   otherUser: ConversationParticipant;
   lastMessage: Message | null;
   unreadCount: number;
+  /**
+   * True when at least one participant is premium — then both can send
+   * images. When false, hide attach controls and offer the upgrade; the
+   * server also enforces it (402 on presign and on send with
+   * mediaStorageKey). Text and viewing received images are never gated.
+   */
+  imageMessagingEnabled: boolean;
 }
 
 /** One frame on /topic/conversations/{id}. Unknown types must be ignored. */
@@ -210,6 +217,17 @@ export interface ChatEvent {
   /** "presence" events: presenceUserId went online/offline. */
   presenceUserId: number | null;
   online: boolean | null;
+}
+
+export interface PremiumStatusResponse {
+  premium: boolean;
+  /** Set once by the Stripe webhook; never expires. Null while free. */
+  premiumSince: string | null;
+}
+
+export interface CheckoutSessionResponse {
+  /** Stripe-hosted Checkout page — redirect the whole browser here. */
+  checkoutUrl: string;
 }
 
 /** RFC 7807 problem detail. */
