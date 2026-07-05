@@ -8,6 +8,7 @@ import { LikesPage } from "./pages/LikesPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PhotosPage } from "./pages/PhotosPage";
 import { PreferencesPage } from "./pages/PreferencesPage";
+import { PremiumPage } from "./pages/PremiumPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { SignupPage } from "./pages/SignupPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
@@ -26,6 +27,10 @@ export function App() {
             <Route path="/chats" element={<ConversationsPage />} />
             <Route path="/chats/:id" element={<ChatPage />} />
             <Route path="/photos" element={<PhotosPage />} />
+            <Route path="/premium" element={<PremiumPage />} />
+            {/* Stripe redirect landings (backend STRIPE_SUCCESS_URL / STRIPE_CANCEL_URL). */}
+            <Route path="/premium/success" element={<PremiumPage variant="success" />} />
+            <Route path="/premium/cancelled" element={<PremiumPage variant="cancelled" />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/preferences" element={<PreferencesPage />} />
           </Route>

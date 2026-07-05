@@ -2,6 +2,7 @@ import { api } from "./http";
 import type {
   ChatMediaUploadResponse,
   ChatMediaUrlsResponse,
+  CheckoutSessionResponse,
   Conversation,
   DiscoveryCard,
   Interest,
@@ -9,6 +10,7 @@ import type {
   NearbyProfile,
   PhotoResponse,
   PreferencesResponse,
+  PremiumStatusResponse,
   ProfilePhotoUploadResponse,
   ProfileResponse,
   ReactResponse,
@@ -81,6 +83,17 @@ export const discovery = {
   react: (toUserId: number, kind: ReactionKind) =>
     api<ReactResponse>("/likes", { method: "POST", body: { toUserId, kind } }),
   likesReceived: () => api<ReceivedLike[]>("/likes/received"),
+};
+
+// --- premium (one-time upgrade; unlocks image messaging for both sides) ---
+export const premium = {
+  status: () => api<PremiumStatusResponse>("/premium"),
+  /**
+   * 201 with the Stripe Checkout URL; 409 if already premium. Premium is
+   * granted only by the Stripe webhook — never by the success redirect.
+   */
+  checkout: () =>
+    api<CheckoutSessionResponse>("/premium/checkout", { method: "POST" }),
 };
 
 // --- chat ---

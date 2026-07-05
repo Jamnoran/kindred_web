@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { chat, uploadPhotoBytes } from "../api/endpoints";
 import { ApiError, errorMessage } from "../api/http";
 import type { ChatEvent, Conversation, Message } from "../api/types";
@@ -23,6 +23,7 @@ function mergeMessages(a: Message[], b: Message[]): Message[] {
 
 export function ChatPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const conversationId = Number(id);
   const { user } = useAuth();
   const myId = user?.id;
@@ -37,6 +38,7 @@ export function ChatPage() {
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const [otherTyping, setOtherTyping] = useState(false);
   const [sending, setSending] = useState(false);
+  const [premiumRequired, setPremiumRequired] = useState(false);
 
   const typingExpireTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const lastTypingSentAt = useRef(0);
@@ -46,7 +48,13 @@ export function ChatPage() {
   const handleError = useCallback((err: unknown) => {
     // 404 = not a member / deleted — indistinguishable by design.
     if (err instanceof ApiError && err.status === 404) setGone(true);
-    else setError(errorMessage(err));
+    else if (err instanceof ApiError && err.status === 402) {
+      // Image messaging needs premium and our cached flag was stale —
+      // the server is authoritative, so lock the attach UI immediately.
+      setPremiumRequired(true);
+      setAttachment(null);
+      setConversation((c) => (c ? { ...c, imageMessagingEnabled: false } : c));
+    } else setError(errorMessage(err));
   }, []);
 
   // Only subscribe to ids confirmed by GET /conversations — the server
@@ -303,6 +311,13 @@ export function ChatPage() {
 
       {error && <p className="error">{error}</p>}
 
+      {premiumRequired && (
+        <p className="error">
+          Sending photos needs Kindred Premium — one purchase unlocks it for
+          both of you. <Link to="/premium">Upgrade</Link>
+        </p>
+      )}
+
       {attachmentPreview && (
         <div className="compose-attachment">
           <img src={attachmentPreview} alt="Selected image" />
@@ -326,15 +341,29 @@ export function ChatPage() {
           onChange={onPickImage}
           hidden
         />
-        <button
-          type="button"
-          className="secondary attach-button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={sending}
-          aria-label="Attach an image"
-        >
-          📷
-        </button>
+        {conversation.imageMessagingEnabled ? (
+          <button
+            type="button"
+            className="secondary attach-button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={sending}
+            aria-label="Attach an image"
+          >
+            📷
+          </button>
+        ) : (
+          // Free/free chat: attaching would 402 — route to the upgrade
+          // page instead. One participant's purchase unlocks both.
+          <button
+            type="button"
+            className="secondary attach-button"
+            onClick={() => navigate("/premium")}
+            aria-label="Upgrade to send photos"
+            title="Sending photos needs Premium"
+          >
+            🔒
+          </button>
+        )}
         <input
           value={draft}
           onChange={(e) => onDraftChange(e.target.value)}
