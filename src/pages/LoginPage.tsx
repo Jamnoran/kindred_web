@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import type { Location } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { ApiError, errorMessage } from "../api/http";
 import { auth } from "../api/endpoints";
@@ -8,6 +9,9 @@ import { auth } from "../api/endpoints";
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  // Set by ProtectedLayout when an unauthenticated visit gets bounced here
+  // (e.g. a /conversations/{id} deep link from a notification email).
+  const from = (useLocation().state as { from?: Location } | null)?.from;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +26,7 @@ export function LoginPage() {
     setBusy(true);
     try {
       await login(email, password);
-      navigate("/");
+      navigate(from ? from.pathname + from.search : "/", { replace: true });
     } catch (err) {
       if (err instanceof ApiError && err.status === 403) {
         // correct password but email not verified

@@ -189,6 +189,91 @@ legend {
   letter-spacing: 0.06em;
 }
 
+/* ---------- toggle switch (checkbox-backed) ---------- */
+
+.switch {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  min-height: 0;
+  padding: 0;
+}
+
+.switch-track {
+  flex-shrink: 0;
+  width: 40px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--border);
+  position: relative;
+  transition: background 0.15s ease;
+}
+
+.switch-track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text);
+  transition: transform 0.15s ease;
+}
+
+.switch input:checked + .switch-track {
+  background: var(--accent);
+}
+
+.switch input:checked + .switch-track::after {
+  background: #fff;
+  transform: translateX(16px);
+}
+
+.switch input:focus-visible + .switch-track {
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
+.switch input:disabled + .switch-track {
+  opacity: 0.6;
+}
+
+/* ---------- notification preference grid ---------- */
+
+.notif-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.notif-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.notif-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.notif-row-channels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 /* ---------- app shell: fixed viewport height, only <main> scrolls ---------- */
 
 .app-shell {

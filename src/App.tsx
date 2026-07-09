@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext";
 import { ProtectedLayout } from "./components/Layout";
 import { ChatPage } from "./pages/ChatPage";
@@ -13,6 +13,11 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { SignupPage } from "./pages/SignupPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 
+function ConversationRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/chats/${id}`} replace />;
+}
+
 export function App() {
   return (
     <AuthProvider>
@@ -26,6 +31,8 @@ export function App() {
             <Route path="/likes" element={<LikesPage />} />
             <Route path="/chats" element={<ConversationsPage />} />
             <Route path="/chats/:id" element={<ChatPage />} />
+            {/* Notification emails deep-link here (backend EmailNotificationChannel). */}
+            <Route path="/conversations/:id" element={<ConversationRedirect />} />
             <Route path="/photos" element={<PhotosPage />} />
             <Route path="/premium" element={<PremiumPage />} />
             {/* Stripe redirect landings (backend STRIPE_SUCCESS_URL / STRIPE_CANCEL_URL). */}

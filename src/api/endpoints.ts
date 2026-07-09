@@ -8,6 +8,7 @@ import type {
   Interest,
   Message,
   NearbyProfile,
+  NotificationPreferencesResponse,
   PhotoResponse,
   PreferencesResponse,
   PremiumStatusResponse,
@@ -17,6 +18,7 @@ import type {
   ReactionKind,
   ReceivedLike,
   UpdateLocationRequest,
+  UpdateNotificationPreferencesRequest,
   UpdatePreferencesRequest,
   UpdateProfileRequest,
   UserResponse,
@@ -94,6 +96,17 @@ export const premium = {
    */
   checkout: () =>
     api<CheckoutSessionResponse>("/premium/checkout", { method: "POST" }),
+};
+
+// --- notifications (offline email alerts; PUT is a full grid replace) ---
+export const notifications = {
+  preferences: () =>
+    api<NotificationPreferencesResponse>("/notification-preferences"),
+  updatePreferences: (body: UpdateNotificationPreferencesRequest) =>
+    api<NotificationPreferencesResponse>("/notification-preferences", {
+      method: "PUT",
+      body,
+    }),
 };
 
 // --- chat ---

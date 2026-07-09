@@ -1,4 +1,4 @@
-import { NavLink, Navigate, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { disconnect } from "../realtime/stomp";
 import { Icon } from "./Icon";
@@ -16,9 +16,12 @@ const TABS: { to: string; label: string; icon: IconName; end?: boolean }[] = [
 export function ProtectedLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   if (user === undefined) return <div className="page-loading">Loading…</div>;
-  if (user === null) return <Navigate to="/login" replace />;
+  // Remember where the user was headed (e.g. an email deep link) so the
+  // login page can send them back after they authenticate.
+  if (user === null) return <Navigate to="/login" replace state={{ from: location }} />;
 
   async function onLogout() {
     disconnect();
