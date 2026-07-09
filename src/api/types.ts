@@ -26,11 +26,28 @@ export interface Interest {
 
 export type LocationVisibility = "exact" | "approximate" | "hidden";
 
+/**
+ * Optional and self-identified (null = prefer not to say); no separate trans
+ * categories by design. Orientation is never a profile label — it's the
+ * `genders` ("show me") preference filter, enforced mutually in discovery.
+ */
+export type Gender = "woman" | "man" | "nonbinary";
+
+/**
+ * Multi-select. `non_monogamy` is the ethical-non-monogamy umbrella: the server
+ * auto-adds it to profiles declaring `open` or `polyamory` (responses come back
+ * normalized). Preference filters keep their literal meaning — `polyamory`
+ * filters to specifically-poly people, `non_monogamy` to anyone ENM.
+ */
+export type RelationshipStyle = "monogamy" | "non_monogamy" | "open" | "polyamory";
+
 export interface ProfileResponse {
   userId: number;
   displayName: string | null;
   bio: string | null;
+  gender: Gender | null;
   lookingFor: string[];
+  relationshipStyles: RelationshipStyle[];
   interests: string[];
   locationSet: boolean;
   locationVisibility: LocationVisibility | null;
@@ -40,7 +57,9 @@ export interface ProfileResponse {
 export interface UpdateProfileRequest {
   displayName: string;
   bio?: string;
+  gender?: Gender | null;
   lookingFor?: string[];
+  relationshipStyles?: RelationshipStyle[];
   interests?: string[];
 }
 
@@ -61,7 +80,15 @@ export interface PreferencesResponse {
   distanceKm: number;
   ageMin: number;
   ageMax: number;
+  /**
+   * "Show me" — empty means everyone. The one MUTUALLY enforced filter: you
+   * never see someone whose own filter excludes you, and setting it also hides
+   * profiles with no declared gender (both directions).
+   */
+  genders: Gender[];
   lookingFor: string[];
+  /** Candidates who declared no styles still appear (same as lookingFor). */
+  relationshipStyles: RelationshipStyle[];
   dealbreakers: string[];
   weights: Record<string, number>;
 }
@@ -129,7 +156,9 @@ export interface DiscoveryCard {
   displayName: string;
   age: number;
   bio: string | null;
+  gender: Gender | null;
   lookingFor: string[];
+  relationshipStyles: RelationshipStyle[];
   interests: string[];
   photo: PhotoSummary | null;
   distanceKm: number | null;

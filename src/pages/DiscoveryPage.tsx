@@ -4,6 +4,7 @@ import { discovery } from "../api/endpoints";
 import { errorMessage } from "../api/http";
 import type { DiscoveryCard, Factors, ReactionKind } from "../api/types";
 import { BlurhashImage } from "../components/BlurhashImage";
+import { GENDER_LABELS, RELATIONSHIP_STYLE_LABELS } from "../inclusivity";
 
 export function DiscoveryPage() {
   const [deck, setDeck] = useState<DiscoveryCard[]>([]);
@@ -97,6 +98,7 @@ export function DiscoveryPage() {
             <div className="discovery-overlay">
               <h2>
                 {card.displayName}, {card.age}
+                {card.gender && <span className="muted"> · {GENDER_LABELS[card.gender]}</span>}
               </h2>
               {card.distanceKm != null && (
                 <span className="distance">{card.distanceKm} km away</span>
@@ -107,6 +109,12 @@ export function DiscoveryPage() {
             {card.bio && <p>{card.bio}</p>}
             {card.lookingFor.length > 0 && (
               <p className="muted">Looking for: {card.lookingFor.join(", ")}</p>
+            )}
+            {card.relationshipStyles.length > 0 && (
+              <p className="muted">
+                Relationship style:{" "}
+                {card.relationshipStyles.map((s) => RELATIONSHIP_STYLE_LABELS[s]).join(", ")}
+              </p>
             )}
             {card.interests.length > 0 && (
               <div className="chip-row">
