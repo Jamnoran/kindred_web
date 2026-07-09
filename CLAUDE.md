@@ -80,3 +80,11 @@ changes.
   `http://localhost:5173/premium/...` equivalents.
 - 404 on a conversation means "not a member or deleted" — indistinguishable
   by design; don't try to tell them apart in copy.
+- **Notification emails deep-link to `/conversations/{id}`** (backend
+  `EmailNotificationChannel`), which the client keeps as a redirect alias for
+  `/chats/:id` — don't rename either path without changing the other side.
+  Logged-out deep links round-trip through login via `location.state.from`
+  (ProtectedLayout → LoginPage). `PUT /notification-preferences` is a **full
+  replace**: always send the entire grid; omitted type/channel pairs reset to
+  enabled. The grid is server-driven — never hardcode the type/channel lists
+  in the UI (unknown values render via `humanize()` in PreferencesPage).

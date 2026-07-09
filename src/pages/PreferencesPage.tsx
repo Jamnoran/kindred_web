@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { discovery } from "../api/endpoints";
+import { discovery, notifications } from "../api/endpoints";
 import { errorMessage } from "../api/http";
-import type { PreferencesResponse } from "../api/types";
+import type { NotificationPreferenceEntry, PreferencesResponse } from "../api/types";
 import { getStoredTheme, setTheme } from "../theme";
 import type { Theme } from "../theme";
 
@@ -13,6 +13,103 @@ const WEIGHT_KEYS: { key: string; label: string }[] = [
   { key: "activity", label: "Recently active" },
   { key: "mutualFit", label: "Mutual fit" },
 ];
+
+// Labels for known types/channels; unknown values from newer backends fall
+// back to a humanized slug so they still render (the grid is server-driven).
+const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
+  new_match: "New match",
+  new_message: "New message",
+};
+const NOTIFICATION_TYPE_HINTS: Record<string, string> = {
+  new_message:
+    "At most one email per conversation every 15 minutes, and emails never include the message text.",
+};
+const NOTIFICATION_CHANNEL_LABELS: Record<string, string> = {
+  email: "Email",
+};
+
+function humanize(slug: string): string {
+  const words = slug.replace(/[_-]+/g, " ").trim();
+  return words ? words[0].toUpperCase() + words.slice(1) : slug;
+}
+
+function NotificationSettings() {
+  const [entries, setEntries] = useState<NotificationPreferenceEntry[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    notifications
+      .preferences()
+      .then((r) => setEntries(r.preferences))
+      .catch((err) => setError(errorMessage(err)));
+  }, []);
+
+  // PUT is a full replace: always send the entire grid, then adopt the
+  // server's copy of it.
+  async function toggle(target: NotificationPreferenceEntry) {
+    if (!entries) return;
+    const next = entries.map((e) =>
+      e.type === target.type && e.channel === target.channel
+        ? { ...e, enabled: !e.enabled }
+        : e,
+    );
+    setEntries(next);
+    setError(null);
+    setBusy(true);
+    try {
+      const res = await notifications.updatePreferences({ preferences: next });
+      setEntries(res.preferences);
+    } catch (err) {
+      setEntries(entries); // revert the optimistic flip
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!entries && !error) return null;
+
+  // Group rows by type, one toggle per channel, in server order.
+  const types = entries ? [...new Set(entries.map((e) => e.type))] : [];
+
+  return (
+    <div className="card form">
+      <fieldset>
+        <legend>Notifications</legend>
+        <p className="muted">When you're offline, we'll let you know about…</p>
+        {types.map((type) => {
+          const hint = NOTIFICATION_TYPE_HINTS[type];
+          return (
+            <div className="notif-row" key={type}>
+              <div className="notif-row-info">
+                <span>{NOTIFICATION_TYPE_LABELS[type] ?? humanize(type)}</span>
+                {hint && <span className="notif-hint">{hint}</span>}
+              </div>
+              <div className="notif-row-channels">
+                {entries!
+                  .filter((e) => e.type === type)
+                  .map((entry) => (
+                    <label className="switch" key={entry.channel}>
+                      <input
+                        type="checkbox"
+                        checked={entry.enabled}
+                        disabled={busy}
+                        onChange={() => toggle(entry)}
+                      />
+                      <span className="switch-track" aria-hidden="true" />
+                      {NOTIFICATION_CHANNEL_LABELS[entry.channel] ?? humanize(entry.channel)}
+                    </label>
+                  ))}
+              </div>
+            </div>
+          );
+        })}
+        {error && <p className="error">{error}</p>}
+      </fieldset>
+    </div>
+  );
+}
 
 export function PreferencesPage() {
   // PUT /preferences is a full replace with server defaults for omitted
@@ -92,6 +189,7 @@ export function PreferencesPage() {
           </div>
         </fieldset>
       </div>
+      <NotificationSettings />
       <form className="card form" onSubmit={onSave}>
         <label>
           Maximum distance: {prefs.distanceKm} km

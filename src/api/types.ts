@@ -219,6 +219,32 @@ export interface ChatEvent {
   online: boolean | null;
 }
 
+/**
+ * Offline-notification preference grid. Types and channels are open unions:
+ * render whatever the server sends so new values (push, digests, …) appear
+ * without a client change.
+ */
+export type NotificationType = "new_match" | "new_message" | (string & {});
+export type NotificationChannel = "email" | (string & {});
+
+export interface NotificationPreferenceEntry {
+  type: NotificationType;
+  channel: NotificationChannel;
+  enabled: boolean;
+}
+
+/**
+ * PUT is a full replace: send back the ENTIRE grid with toggles flipped —
+ * any type/channel pair omitted resets to enabled. Duplicate pairs → 400.
+ */
+export interface UpdateNotificationPreferencesRequest {
+  preferences: NotificationPreferenceEntry[];
+}
+
+export interface NotificationPreferencesResponse {
+  preferences: NotificationPreferenceEntry[];
+}
+
 export interface PremiumStatusResponse {
   premium: boolean;
   /** Set once by the Stripe webhook; never expires. Null while free. */
