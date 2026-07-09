@@ -3,6 +3,12 @@ import type { FormEvent } from "react";
 import { discovery, notifications } from "../api/endpoints";
 import { errorMessage } from "../api/http";
 import type { NotificationPreferenceEntry, PreferencesResponse } from "../api/types";
+import {
+  GENDER_LABELS,
+  GENDER_OPTIONS,
+  RELATIONSHIP_STYLE_LABELS,
+  RELATIONSHIP_STYLE_OPTIONS,
+} from "../inclusivity";
 import { getStoredTheme, setTheme } from "../theme";
 import type { Theme } from "../theme";
 
@@ -223,6 +229,58 @@ export function PreferencesPage() {
             />
           </label>
         </div>
+        <fieldset>
+          <legend>Show me</legend>
+          <p className="muted">
+            Pick any combination — leave all off to see everyone. This works both
+            ways: you only appear to people whose filters include you, and
+            filtering hides profiles that haven't declared a gender.
+          </p>
+          <div className="chip-row">
+            {GENDER_OPTIONS.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                className={`chip ${prefs.genders.includes(opt) ? "chip-on" : ""}`}
+                onClick={() =>
+                  patch({
+                    genders: prefs.genders.includes(opt)
+                      ? prefs.genders.filter((v) => v !== opt)
+                      : [...prefs.genders, opt],
+                  })
+                }
+              >
+                {GENDER_LABELS[opt]}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Relationship style</legend>
+          <p className="muted">
+            Only show people whose declared style overlaps — "Non-monogamy (ENM)"
+            matches anyone ethically non-monogamous, "Polyamory" only
+            specifically-poly people. People who haven't declared one still appear.
+          </p>
+          <div className="chip-row">
+            {RELATIONSHIP_STYLE_OPTIONS.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                className={`chip ${prefs.relationshipStyles.includes(opt) ? "chip-on" : ""}`}
+                onClick={() =>
+                  patch({
+                    relationshipStyles: prefs.relationshipStyles.includes(opt)
+                      ? prefs.relationshipStyles.filter((v) => v !== opt)
+                      : [...prefs.relationshipStyles, opt],
+                  })
+                }
+              >
+                {RELATIONSHIP_STYLE_LABELS[opt]}
+              </button>
+            ))}
+          </div>
+        </fieldset>
         <fieldset>
           <legend>Looking for</legend>
           <div className="chip-row">

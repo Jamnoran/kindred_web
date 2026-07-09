@@ -78,6 +78,15 @@ changes.
   server runs on **5173** — for local end-to-end checkout, set
   `STRIPE_SUCCESS_URL`/`STRIPE_CANCEL_URL` in the backend env to the
   `http://localhost:5173/premium/...` equivalents.
+- **Inclusivity model** (labels in `src/inclusivity.ts`): `gender` is optional
+  self-identification (`woman|man|nonbinary`, null = prefer not to say — the
+  Profile chip toggles off); orientation is only ever the `genders` "show me"
+  preference (multi-select, mutually enforced server-side — copy must say
+  filtering hides you from people you exclude AND hides undeclared-gender
+  profiles). `relationshipStyles`: the server umbrella-normalizes profile
+  writes (open/polyamory ⇒ + non_monogamy) so ProfilePage adopts the response
+  list after save (chips update themselves); preference filters are verbatim —
+  don't "helpfully" pre-add the umbrella in the UI.
 - 404 on a conversation means "not a member or deleted" — indistinguishable
   by design; don't try to tell them apart in copy.
 - **Notification emails deep-link to `/conversations/{id}`** (backend
