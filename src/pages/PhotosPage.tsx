@@ -3,12 +3,14 @@ import { photos, uploadPhotoBytes } from "../api/endpoints";
 import { errorMessage } from "../api/http";
 import type { PhotoResponse } from "../api/types";
 import { BlurhashImage } from "../components/BlurhashImage";
+import { usePageTitle } from "../usePageTitle";
 
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
 const MAX_PHOTOS = 6;
 const POLL_MS = 3000;
 
 export function PhotosPage() {
+  usePageTitle("Photos");
   const [list, setList] = useState<PhotoResponse[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -73,6 +75,12 @@ export function PhotosPage() {
         until approved.
       </p>
       {error && <p className="error">{error}</p>}
+      {count === 0 && (
+        <div className="card empty-state">
+          <span className="empty-state-emoji">📷</span>
+          <p>No photos yet — your discovery card shows a placeholder until you add one.</p>
+        </div>
+      )}
       <div className="photo-grid">
         {list?.map((photo) => (
           <div key={photo.id} className={`photo-tile status-${photo.status}`}>

@@ -11,6 +11,7 @@ import {
 } from "../inclusivity";
 import { getStoredTheme, setTheme } from "../theme";
 import type { Theme } from "../theme";
+import { usePageTitle } from "../usePageTitle";
 
 const LOOKING_FOR_OPTIONS = ["relationship", "casual", "friendship", "unsure"];
 const WEIGHT_KEYS: { key: string; label: string }[] = [
@@ -118,6 +119,7 @@ function NotificationSettings() {
 }
 
 export function PreferencesPage() {
+  usePageTitle("Preferences");
   // PUT /preferences is a full replace with server defaults for omitted
   // fields, so we keep the whole server object and mutate it locally.
   const [prefs, setPrefs] = useState<PreferencesResponse | null>(null);
@@ -152,6 +154,10 @@ export function PreferencesPage() {
     e.preventDefault();
     if (!prefs) return;
     setError(null);
+    if (prefs.ageMin > prefs.ageMax) {
+      setError("The age range is inverted — “from” must be at most “to”.");
+      return;
+    }
     setBusy(true);
     try {
       const body = {

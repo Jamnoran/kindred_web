@@ -67,6 +67,7 @@ export function VerifyEmailPage() {
                   Email
                   <input
                     type="email"
+                    autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required

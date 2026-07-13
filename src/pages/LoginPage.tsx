@@ -5,8 +5,10 @@ import type { Location } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { ApiError, errorMessage } from "../api/http";
 import { auth } from "../api/endpoints";
+import { usePageTitle } from "../usePageTitle";
 
 export function LoginPage() {
+  usePageTitle("Log in");
   const { login } = useAuth();
   const navigate = useNavigate();
   // Set by ProtectedLayout when an unauthenticated visit gets bounced here
@@ -54,12 +56,19 @@ export function LoginPage() {
         <h2>Log in</h2>
         <label>
           Email
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
         </label>
         <label>
           Password
           <input
             type="password"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

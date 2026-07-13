@@ -32,3 +32,6 @@ behavior, run the real app against a mock backend and drive it with Playwright.
   the first child); prefer `:has-text(...)` locators.
 - Simulate API failure with `page.route(url, route => route.abort())` to test
   error paths (inline `.error` + state revert).
+- `page.click` times out with "element is not visible" on elements inside the
+  `.chat-scroll` overflow pane (e.g. the load-older button); click them via
+  `page.evaluate(() => document.querySelector(sel).click())` instead.

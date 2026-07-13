@@ -6,6 +6,8 @@ import type { ChatEvent, Conversation, Message } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 import { BlurhashImage } from "../components/BlurhashImage";
 import { onConnected, subscribeConversation } from "../realtime/stomp";
+import { relativeTime } from "../time";
+import { usePageTitle } from "../usePageTitle";
 
 /**
  * Last-message preview. Media messages get a generic label — never a
@@ -23,6 +25,7 @@ export function ConversationsPage() {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  usePageTitle("Chats");
 
   const refresh = useCallback(() => {
     chat
@@ -107,10 +110,17 @@ export function ConversationsPage() {
                 <span className="muted preview">
                   {convo.lastMessage
                     ? preview(convo.lastMessage, user?.id)
-                    : `Matched ${new Date(convo.matchedAt).toLocaleDateString()} — say hi!`}
+                    : "New match — say hi!"}
                 </span>
               </div>
-              {convo.unreadCount > 0 && <span className="unread-badge">{convo.unreadCount}</span>}
+              <div className="conversation-meta">
+                <span className="muted convo-time">
+                  {relativeTime(convo.lastMessage?.createdAt ?? convo.matchedAt)}
+                </span>
+                {convo.unreadCount > 0 && (
+                  <span className="unread-badge">{convo.unreadCount}</span>
+                )}
+              </div>
             </Link>
           </li>
         ))}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { chat, uploadPhotoBytes } from "../api/endpoints";
@@ -8,6 +8,8 @@ import { useAuth } from "../auth/AuthContext";
 import { BlurhashImage } from "../components/BlurhashImage";
 import { ChatMediaImage } from "../components/ChatMediaImage";
 import { onConnected, sendTyping, subscribeConversation } from "../realtime/stomp";
+import { dayLabel, sameDay } from "../time";
+import { usePageTitle } from "../usePageTitle";
 
 const PAGE_SIZE = 50;
 const TYPING_THROTTLE_MS = 3000;
@@ -44,6 +46,14 @@ export function ChatPage() {
   const lastTypingSentAt = useRef(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Whether the viewer is at (or near) the newest message — only then may new
+  // activity yank the pane down. Starts true so the initial load lands at the
+  // bottom.
+  const pinnedToBottom = useRef(true);
+  // Distance from the bottom to restore after prepending older messages.
+  const prependAnchor = useRef<number | null>(null);
+
+  usePageTitle(conversation?.otherUser.displayName);
 
   const handleError = useCallback((err: unknown) => {
     // 404 = not a member / deleted — indistinguishable by design.
@@ -174,16 +184,33 @@ export function ChatPage() {
   }, [attachment]);
 
   // Scroll only the message pane — scrollIntoView would also scroll the
-  // page itself and hide the conversation header on mobile.
-  useEffect(() => {
+  // page itself and hide the conversation header on mobile. Prepends restore
+  // the reading position; everything else sticks to the bottom only while
+  // the viewer is already there (layout effect: before the browser paints,
+  // so neither case flashes the wrong position).
+  useLayoutEffect(() => {
     const pane = scrollRef.current;
-    if (pane) pane.scrollTop = pane.scrollHeight;
-  }, [messages.length, otherTyping]);
+    if (!pane) return;
+    if (prependAnchor.current !== null) {
+      pane.scrollTop = pane.scrollHeight - prependAnchor.current;
+      prependAnchor.current = null;
+    } else if (pinnedToBottom.current) {
+      pane.scrollTop = pane.scrollHeight;
+    }
+  }, [messages, otherTyping]);
+
+  function onScroll() {
+    const pane = scrollRef.current;
+    if (!pane) return;
+    pinnedToBottom.current = pane.scrollHeight - pane.scrollTop - pane.clientHeight < 80;
+  }
 
   async function loadOlder() {
     if (messages.length === 0) return;
     try {
       const older = await chat.messages(conversationId, PAGE_SIZE, messages[0].id);
+      const pane = scrollRef.current;
+      prependAnchor.current = pane ? pane.scrollHeight - pane.scrollTop : null;
       setHasMore(older.length === PAGE_SIZE);
       setMessages((current) => mergeMessages(older, current));
     } catch (err) {
@@ -223,6 +250,7 @@ export function ChatPage() {
         ...(body ? { body } : {}),
         ...(mediaStorageKey ? { mediaStorageKey } : {}),
       });
+      pinnedToBottom.current = true; // always show your own message
       setMessages((current) => mergeMessages(current, [sent]));
       setDraft("");
       setAttachment(null);
@@ -289,21 +317,28 @@ export function ChatPage() {
         </div>
       </header>
 
-      <div className="chat-scroll" ref={scrollRef}>
+      <div className="chat-scroll" ref={scrollRef} onScroll={onScroll}>
         {hasMore && (
           <button className="link-button load-older" onClick={loadOlder}>
             Load older messages
           </button>
         )}
-        {messages.map((m) => (
-          <div key={m.id} className={`bubble-row ${m.senderId === myId ? "mine" : "theirs"}`}>
-            <div className="bubble">
-              {m.media && <ChatMediaImage conversationId={conversationId} media={m.media} />}
-              {m.body && <p>{m.body}</p>}
-              <span className="bubble-meta">
-                {dayFormat.format(new Date(m.createdAt))}
-                {m.id === lastOwnRead?.id && " · Read"}
-              </span>
+        {messages.map((m, i) => (
+          <div key={m.id}>
+            {(i === 0 || !sameDay(messages[i - 1].createdAt, m.createdAt)) && (
+              <div className="day-divider">
+                <span>{dayLabel(m.createdAt)}</span>
+              </div>
+            )}
+            <div className={`bubble-row ${m.senderId === myId ? "mine" : "theirs"}`}>
+              <div className="bubble">
+                {m.media && <ChatMediaImage conversationId={conversationId} media={m.media} />}
+                {m.body && <p>{m.body}</p>}
+                <span className="bubble-meta">
+                  {dayFormat.format(new Date(m.createdAt))}
+                  {m.id === lastOwnRead?.id && " · Read"}
+                </span>
+              </div>
             </div>
           </div>
         ))}

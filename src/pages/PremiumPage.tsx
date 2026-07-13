@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { premium } from "../api/endpoints";
 import { ApiError, errorMessage } from "../api/http";
 import type { PremiumStatusResponse } from "../api/types";
+import { usePageTitle } from "../usePageTitle";
 
 const POLL_INTERVAL_MS = 2000;
 /** After ~30 s of polling, admit it's taking longer than usual. */
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function PremiumPage({ variant }: Props) {
+  usePageTitle("Premium");
   const [status, setStatus] = useState<PremiumStatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [redirecting, setRedirecting] = useState(false);
