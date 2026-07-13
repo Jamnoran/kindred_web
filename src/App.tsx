@@ -6,6 +6,7 @@ import { ConversationsPage } from "./pages/ConversationsPage";
 import { DiscoveryPage } from "./pages/DiscoveryPage";
 import { LikesPage } from "./pages/LikesPage";
 import { LoginPage } from "./pages/LoginPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 import { PhotosPage } from "./pages/PhotosPage";
 import { PreferencesPage } from "./pages/PreferencesPage";
 import { PremiumPage } from "./pages/PremiumPage";
@@ -40,6 +41,8 @@ export function App() {
             <Route path="/premium/cancelled" element={<PremiumPage variant="cancelled" />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/preferences" element={<PreferencesPage />} />
+            {/* Unknown routes: keep the nav, offer a way home. */}
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

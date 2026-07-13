@@ -15,10 +15,12 @@ import {
   RELATIONSHIP_STYLE_LABELS,
   RELATIONSHIP_STYLE_OPTIONS,
 } from "../inclusivity";
+import { usePageTitle } from "../usePageTitle";
 
 const LOOKING_FOR_OPTIONS = ["relationship", "casual", "friendship", "unsure"];
 
 export function ProfilePage() {
+  usePageTitle("Profile");
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [allInterests, setAllInterests] = useState<Interest[]>([]);
   const [displayName, setDisplayName] = useState("");

@@ -5,8 +5,10 @@ import { errorMessage } from "../api/http";
 import type { DiscoveryCard, Factors, ReactionKind } from "../api/types";
 import { BlurhashImage } from "../components/BlurhashImage";
 import { GENDER_LABELS, RELATIONSHIP_STYLE_LABELS } from "../inclusivity";
+import { usePageTitle } from "../usePageTitle";
 
 export function DiscoveryPage() {
+  usePageTitle("Discover");
   const [deck, setDeck] = useState<DiscoveryCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
