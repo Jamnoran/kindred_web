@@ -984,6 +984,23 @@ legend {
   padding: 0.2rem 0.5rem;
 }
 
+.chat-header-profile-link {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  text-decoration: none;
+  color: inherit;
+  flex: 1;
+  min-width: 0;
+  border-radius: 8px;
+  padding: 0.2rem 0.4rem;
+  transition: background 0.12s ease;
+}
+
+.chat-header-profile-link:hover {
+  background: var(--surface-2);
+}
+
 .chat-header-text {
   display: flex;
   flex-direction: column;

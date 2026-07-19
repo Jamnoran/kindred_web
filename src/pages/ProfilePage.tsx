@@ -15,7 +15,7 @@ const LOOKING_FOR_OPTIONS = ["relationship", "casual", "friendship", "unsure"];
 
 export function ProfilePage() {
   usePageTitle("Profile");
-  const [data, setData] = useState<ProfileResponse | null>(null);
+  const [, setData] = useState<ProfileResponse | null>(null);
   const [allInterests, setAllInterests] = useState<Interest[]>([]);
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");

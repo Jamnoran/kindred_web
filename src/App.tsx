@@ -3,6 +3,7 @@ import { AuthProvider } from "./auth/AuthContext";
 import { ProtectedLayout } from "./components/Layout";
 import { ChatPage } from "./pages/ChatPage";
 import { ConversationsPage } from "./pages/ConversationsPage";
+import { MatchProfilePage } from "./pages/MatchProfilePage";
 import { DiscoveryPage } from "./pages/DiscoveryPage";
 import { LikesPage } from "./pages/LikesPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -32,6 +33,7 @@ export function App() {
             <Route path="/likes" element={<LikesPage />} />
             <Route path="/chats" element={<ConversationsPage />} />
             <Route path="/chats/:id" element={<ChatPage />} />
+            <Route path="/chats/:id/profile" element={<MatchProfilePage />} />
             {/* Notification emails deep-link here (backend EmailNotificationChannel). */}
             <Route path="/conversations/:id" element={<ConversationRedirect />} />
             <Route path="/photos" element={<PhotosPage />} />

@@ -298,23 +298,29 @@ export function ChatPage() {
         <Link to="/chats" className="back" aria-label="Back to chats">
           ←
         </Link>
-        <div className="avatar-wrap">
-          <BlurhashImage
-            blurhash={other.photo?.blurhash}
-            src={other.photo?.urls?.thumb}
-            alt={other.displayName}
-            className="avatar avatar-sm"
-          />
-          {other.online && <span className="online-dot" aria-label="Online" />}
-        </div>
-        <div className="chat-header-text">
-          <strong>{other.displayName}</strong>
-          {otherTyping ? (
-            <span className="muted typing">typing…</span>
-          ) : other.online ? (
-            <span className="presence-label">Online</span>
-          ) : null}
-        </div>
+        <Link
+          to={`/chats/${conversationId}/profile`}
+          className="chat-header-profile-link"
+          aria-label={`View ${other.displayName}'s profile`}
+        >
+          <div className="avatar-wrap">
+            <BlurhashImage
+              blurhash={other.photo?.blurhash}
+              src={other.photo?.urls?.thumb}
+              alt={other.displayName}
+              className="avatar avatar-sm"
+            />
+            {other.online && <span className="online-dot" aria-label="Online" />}
+          </div>
+          <div className="chat-header-text">
+            <strong>{other.displayName}</strong>
+            {otherTyping ? (
+              <span className="muted typing">typing…</span>
+            ) : other.online ? (
+              <span className="presence-label">Online</span>
+            ) : null}
+          </div>
+        </Link>
       </header>
 
       <div className="chat-scroll" ref={scrollRef} onScroll={onScroll}>

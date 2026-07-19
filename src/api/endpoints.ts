@@ -6,6 +6,7 @@ import type {
   Conversation,
   DiscoveryCard,
   Interest,
+  MatchProfileResponse,
   Message,
   NearbyProfile,
   NotificationPreferencesResponse,
@@ -48,6 +49,8 @@ export const profile = {
   interests: () => api<Interest[]>("/interests"),
   nearby: (radiusKm: number) =>
     api<NearbyProfile[]>(`/profiles/nearby?radiusKm=${radiusKm}`),
+  /** Profile of a matched user. 404 if no match exists. */
+  getMatch: (userId: number) => api<MatchProfileResponse>(`/profiles/${userId}`),
 };
 
 // --- photos (presign -> direct upload -> register -> poll) ---

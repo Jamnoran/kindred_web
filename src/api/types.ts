@@ -296,6 +296,19 @@ export interface CheckoutSessionResponse {
   checkoutUrl: string;
 }
 
+/** Profile of a matched user — returned by GET /profiles/{userId}. */
+export interface MatchProfileResponse {
+  userId: number;
+  displayName: string;
+  age: number;
+  bio: string | null;
+  gender: Gender | null;
+  lookingFor: string[];
+  relationshipStyles: RelationshipStyle[];
+  interests: string[];
+  photo: PhotoSummary | null;
+}
+
 /** RFC 7807 problem detail. */
 export interface ProblemDetail {
   type?: string;
