@@ -1,24 +1,34 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { discovery } from "../api/endpoints";
-import { errorMessage } from "../api/http";
+import { ApiError, errorMessage } from "../api/http";
 import type { DiscoveryCard, Factors, ReactionKind } from "../api/types";
 import { BlurhashImage } from "../components/BlurhashImage";
+import { LocationSection } from "../components/LocationSection";
+import { GENDER_LABELS, RELATIONSHIP_STYLE_LABELS } from "../inclusivity";
+import { usePageTitle } from "../usePageTitle";
 
 export function DiscoveryPage() {
+  usePageTitle("Discover");
   const [deck, setDeck] = useState<DiscoveryCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [match, setMatch] = useState<{ name: string; conversationId: number | null } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [needsProfile, setNeedsProfile] = useState(false);
 
   const loadDeck = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setNeedsProfile(false);
     try {
       setDeck(await discovery.deck(20));
     } catch (err) {
-      setError(errorMessage(err));
+      if (err instanceof ApiError && err.status === 404) {
+        setNeedsProfile(true);
+      } else {
+        setError(errorMessage(err));
+      }
     } finally {
       setLoading(false);
     }
@@ -48,14 +58,13 @@ export function DiscoveryPage() {
     }
   }
 
-  if (loading && deck.length === 0) return <div className="page-loading">Loading…</div>;
-
   return (
     <div className="page">
       {match && (
         <div className="modal-backdrop" onClick={() => setMatch(null)}>
           <div className="card modal" onClick={(e) => e.stopPropagation()}>
-            <h2>It's a match! 🎉</h2>
+            <div className="match-hearts">💞</div>
+            <h2>It's a match!</h2>
             <p>You and {match.name} liked each other.</p>
             {match.conversationId != null ? (
               <Link className="button" to={`/chats/${match.conversationId}`}>
@@ -73,32 +82,63 @@ export function DiscoveryPage() {
         </div>
       )}
 
+      {/* Location lives here (not on the profile) because it changes as you
+          move around; saving refetches the deck so distances stay honest. */}
+      <LocationSection onSaved={loadDeck} />
+
       {error && <p className="error">{error}</p>}
 
-      {!card && !loading && (
+      {/* The deck area alone goes into the loading state so the location
+          section doesn't unmount (and lose its editor state) on refetch. */}
+      {loading && deck.length === 0 && <div className="page-loading">Loading…</div>}
+
+      {needsProfile && (
         <div className="card empty-state">
+          <div className="empty-state-emoji">👤</div>
+          <h2>Create your profile first</h2>
+          <p className="muted">Set up your profile to start discovering people nearby.</p>
+          <Link className="button" to="/profile">Create profile</Link>
+        </div>
+      )}
+
+      {!card && !loading && !needsProfile && (
+        <div className="card empty-state">
+          <div className="empty-state-emoji">💫</div>
           <h2>No one new right now</h2>
-          <p>Widen your preferences or check back later.</p>
+          <p className="muted">Widen your preferences or check back later.</p>
           <button onClick={loadDeck}>Refresh</button>
         </div>
       )}
 
       {card && (
         <div className="card discovery-card">
-          <BlurhashImage
-            blurhash={card.photo?.blurhash}
-            src={card.photo?.urls?.card}
-            alt={card.displayName}
-            className="discovery-photo"
-          />
+          <div className="discovery-photo-wrap">
+            <BlurhashImage
+              blurhash={card.photo?.blurhash}
+              src={card.photo?.urls?.card}
+              alt={card.displayName}
+              className="discovery-photo"
+            />
+            <div className="discovery-overlay">
+              <h2>
+                {card.displayName}, {card.age}
+                {card.gender && <span className="muted"> · {GENDER_LABELS[card.gender]}</span>}
+              </h2>
+              {card.distanceKm != null && (
+                <span className="distance">{card.distanceKm} km away</span>
+              )}
+            </div>
+          </div>
           <div className="discovery-body">
-            <h2>
-              {card.displayName}, {card.age}
-              {card.distanceKm != null && <span className="muted"> · {card.distanceKm} km</span>}
-            </h2>
             {card.bio && <p>{card.bio}</p>}
             {card.lookingFor.length > 0 && (
               <p className="muted">Looking for: {card.lookingFor.join(", ")}</p>
+            )}
+            {card.relationshipStyles.length > 0 && (
+              <p className="muted">
+                Relationship style:{" "}
+                {card.relationshipStyles.map((s) => RELATIONSHIP_STYLE_LABELS[s]).join(", ")}
+              </p>
             )}
             {card.interests.length > 0 && (
               <div className="chip-row">
@@ -115,14 +155,32 @@ export function DiscoveryPage() {
             <WhyThisPerson factors={card.whyThisPerson} />
           </div>
           <div className="react-row">
-            <button className="react pass" disabled={busy} onClick={() => react("pass")}>
-              ✕ Pass
+            <button
+              className="react pass"
+              aria-label="Pass"
+              title="Pass"
+              disabled={busy}
+              onClick={() => react("pass")}
+            >
+              ✕
             </button>
-            <button className="react like" disabled={busy} onClick={() => react("like")}>
-              ♥ Like
+            <button
+              className="react like"
+              aria-label="Like"
+              title="Like"
+              disabled={busy}
+              onClick={() => react("like")}
+            >
+              ♥
             </button>
-            <button className="react superlike" disabled={busy} onClick={() => react("superlike")}>
-              ★ Superlike
+            <button
+              className="react superlike"
+              aria-label="Superlike"
+              title="Superlike"
+              disabled={busy}
+              onClick={() => react("superlike")}
+            >
+              ★
             </button>
           </div>
         </div>

@@ -40,10 +40,26 @@ build time if the API is not on the app's own origin.
   straight into the already-created conversation.
 - **Preferences** — read-modify-write full replace of filters + scoring weights.
 - **Chat** — REST for history (newest-first keyset pagination) and sends;
-  STOMP over `/ws` (`src/realtime/stomp.ts`) for message/read/typing events with
-  auto-reconnect, REST re-sync on every (re)connect (the relay has no replay),
-  dedupe by message id, throttled typing signals, client-side typing expiry,
-  and unknown event types ignored.
+  STOMP over `/ws` (`src/realtime/stomp.ts`) for message/read/typing/media/presence
+  events with auto-reconnect, REST re-sync on every (re)connect (the relay has
+  no replay), dedupe by message id, throttled typing signals, client-side typing
+  expiry, and unknown event types ignored.
+- **Chat images** — presign scoped to the conversation → direct `PUT` to
+  storage → message with `mediaStorageKey`; pending placeholder until the
+  `media` event resolves to approved/rejected. Bytes are private: signed URLs
+  (~5 min) are fetched per view when the image scrolls into sight and refetched
+  on expiry (`src/components/ChatMediaImage.tsx`). NSFW images render only the
+  blurhash until explicitly tapped — per image, never fetched early — and the
+  conversation list shows a generic "Photo" label instead of any thumbnail.
+- **Presence** — `online` flag from `GET /conversations` shown as a dot in the
+  list and chat header, kept live by `presence` events while subscribed.
+- **Premium** — `imageMessagingEnabled` per conversation gates the attach
+  button (🔒 links to `/premium` when a chat is free/free; one participant's
+  one-time purchase unlocks images for both). `POST /premium/checkout`
+  redirects to Stripe-hosted Checkout; `/premium/success` polls `GET /premium`
+  until the webhook grants the upgrade (landing on the success URL is never
+  treated as proof of payment), `/premium/cancelled` offers a retry. A 402
+  from presign/send locks the attach UI and shows the upgrade prompt.
 
 ## API types
 

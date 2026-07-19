@@ -4,8 +4,10 @@ import { discovery } from "../api/endpoints";
 import { errorMessage } from "../api/http";
 import type { ReceivedLike } from "../api/types";
 import { BlurhashImage } from "../components/BlurhashImage";
+import { usePageTitle } from "../usePageTitle";
 
 export function LikesPage() {
+  usePageTitle("Likes");
   const [likes, setLikes] = useState<ReceivedLike[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -17,10 +19,10 @@ export function LikesPage() {
       .catch((err) => setError(errorMessage(err)));
   }, []);
 
-  async function likeBack(like: ReceivedLike) {
+  async function react(like: ReceivedLike, kind: "like" | "pass") {
     setError(null);
     try {
-      const result = await discovery.react(like.userId, "like");
+      const result = await discovery.react(like.userId, kind);
       if (result.matched && result.conversationId != null) {
         navigate(`/chats/${result.conversationId}`);
         return;
@@ -57,7 +59,10 @@ export function LikesPage() {
                 {like.kind === "superlike" ? "★ superliked you" : "♥ liked you"} ·{" "}
                 {new Date(like.likedAt).toLocaleDateString()}
               </span>
-              <button onClick={() => likeBack(like)}>Like back</button>
+              <button onClick={() => react(like, "like")}>♥ Like back</button>
+              <button className="link-button" onClick={() => react(like, "pass")}>
+                Pass
+              </button>
             </div>
           </div>
         ))}
