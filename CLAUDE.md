@@ -90,14 +90,15 @@ changes.
 - **Location is edited on the Discover page** (`LocationSection`), not the
   profile — it changes as people move. Raw coordinates are never shown: device
   geolocation or a city picked from the bundled gazetteer (`src/cities.ts` —
-  the backend has no geocoding endpoint, so city → lat/lng is resolved
-  client-side; diacritic-insensitive search). The server never echoes
-  coordinates back (`ProfileResponse` has only `locationSet`/`visibility`), so
-  a visibility-only change can auto-resave just with coords picked earlier in
-  the same session; otherwise it applies on the next location update. Saving
-  refetches the deck — DiscoveryPage's loading state must only replace the
-  deck area, never early-return the whole page, or LocationSection unmounts
-  mid-save and loses its editor state.
+  city → lat/lng resolves client-side; diacritic-insensitive search). The
+  client targets the extended location contract (see the backend's location
+  work): `ProfileResponse.locationLabel` is a server-side reverse-geocoded
+  place name (never coordinates; the UI falls back gracefully when it's
+  absent), and `PUT /profile/location` accepts a visibility-only body (no
+  lat/lng) once a location is stored — lat/lng always travel as a pair.
+  Saving refetches the deck — DiscoveryPage's loading state must only replace
+  the deck area, never early-return the whole page, or LocationSection
+  unmounts mid-save and loses its editor state.
 - 404 on a conversation means "not a member or deleted" — indistinguishable
   by design; don't try to tell them apart in copy.
 - **Notification emails deep-link to `/conversations/{id}`** (backend

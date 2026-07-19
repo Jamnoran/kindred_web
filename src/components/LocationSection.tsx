@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { profile } from "../api/endpoints";
 import { errorMessage } from "../api/http";
-import type { LocationVisibility } from "../api/types";
+import type { LocationVisibility, UpdateLocationRequest } from "../api/types";
 import { searchCities } from "../cities";
 import type { City } from "../cities";
 
@@ -15,22 +15,18 @@ const VISIBILITY_LABELS: Record<LocationVisibility, string> = {
  * Location editor shown on the discovery page (it changes more often than the
  * rest of the profile). Raw coordinates are never shown: the user either
  * shares their device location or picks a city from the bundled autocomplete,
- * and we send lat/lng to PUT /profile/location behind the scenes.
- *
- * The server never echoes coordinates back (ProfileResponse only carries
- * locationSet + visibility), so changing visibility alone requires coords
- * from this session — otherwise it applies on the next location update.
+ * and we send lat/lng to PUT /profile/location behind the scenes. The server
+ * responds with a coarse reverse-geocoded label (never coordinates), and
+ * accepts a visibility-only PUT — no lat/lng — once a location is stored.
  */
 export function LocationSection({ onSaved }: { onSaved?: () => void }) {
   const [locationSet, setLocationSet] = useState<boolean | null>(null);
   const [visibility, setVisibility] = useState<LocationVisibility>("approximate");
+  const [placeLabel, setPlaceLabel] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<City[]>([]);
-  // Coordinates picked in this session; kept only so a visibility change can
-  // re-save without asking the user to pick their location again.
-  const coordsRef = useRef<{ lat: number; lng: number } | null>(null);
-  const [savedLabel, setSavedLabel] = useState<string | null>(null);
+  const [justSaved, setJustSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,20 +35,24 @@ export function LocationSection({ onSaved }: { onSaved?: () => void }) {
       .get()
       .then((p) => {
         setLocationSet(p.locationSet);
+        setPlaceLabel(p.locationLabel ?? null);
         if (p.locationVisibility) setVisibility(p.locationVisibility);
         if (!p.locationSet) setEditing(true);
       })
       .catch((err) => setError(errorMessage(err)));
   }, []);
 
-  async function save(lat: number, lng: number, vis: LocationVisibility, label: string) {
+  /** fallbackLabel covers backends that don't send locationLabel yet. */
+  async function save(body: UpdateLocationRequest, fallbackLabel: string | null) {
     setError(null);
+    setJustSaved(false);
     setBusy(true);
     try {
-      await profile.updateLocation({ lat, lng, visibility: vis });
-      coordsRef.current = { lat, lng };
-      setLocationSet(true);
-      setSavedLabel(label);
+      const p = await profile.updateLocation(body);
+      setLocationSet(p.locationSet);
+      setPlaceLabel(p.locationLabel ?? fallbackLabel);
+      if (p.locationVisibility) setVisibility(p.locationVisibility);
+      setJustSaved(true);
       onSaved?.();
     } catch (err) {
       setError(errorMessage(err));
@@ -72,7 +72,10 @@ export function LocationSection({ onSaved }: { onSaved?: () => void }) {
       (pos) => {
         setQuery("");
         setResults([]);
-        save(pos.coords.latitude, pos.coords.longitude, visibility, "your current location");
+        save(
+          { lat: pos.coords.latitude, lng: pos.coords.longitude, visibility },
+          "your current location",
+        );
       },
       (err) => {
         setBusy(false);
@@ -88,14 +91,13 @@ export function LocationSection({ onSaved }: { onSaved?: () => void }) {
   function pickCity(city: City) {
     setQuery(`${city.name}, ${city.country}`);
     setResults([]);
-    save(city.lat, city.lng, visibility, city.name);
+    save({ lat: city.lat, lng: city.lng, visibility }, city.name);
   }
 
   function onVisibilityChange(vis: LocationVisibility) {
     setVisibility(vis);
-    // Re-save immediately when we still know the coordinates.
-    const coords = coordsRef.current;
-    if (coords) save(coords.lat, coords.lng, vis, savedLabel ?? "your location");
+    // Visibility-only update: no coordinates needed once a location is stored.
+    if (locationSet) save({ visibility: vis }, placeLabel);
   }
 
   function onBlur(e: React.FocusEvent<HTMLDivElement>) {
@@ -108,7 +110,7 @@ export function LocationSection({ onSaved }: { onSaved?: () => void }) {
     return (
       <div className="card location-bar">
         <span>
-          📍 {savedLabel ? `Location: ${savedLabel}` : "Location set"}
+          📍 {placeLabel ? `Location: ${placeLabel}` : "Location set"}
           <span className="muted"> · {VISIBILITY_LABELS[visibility]}</span>
         </span>
         <button className="link-button" onClick={() => setEditing(true)}>
@@ -183,13 +185,8 @@ export function LocationSection({ onSaved }: { onSaved?: () => void }) {
           <option value="hidden">Hidden — excluded from distance features</option>
         </select>
       </label>
-      {locationSet && !coordsRef.current && (
-        <p className="muted">
-          A visibility change takes effect the next time you update your location.
-        </p>
-      )}
       {error && <p className="error">{error}</p>}
-      {savedLabel && !error && <p className="notice">Location saved.</p>}
+      {justSaved && !error && <p className="notice">Location saved.</p>}
     </div>
   );
 }
