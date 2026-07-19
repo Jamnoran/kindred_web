@@ -51,6 +51,12 @@ export interface ProfileResponse {
   interests: string[];
   locationSet: boolean;
   locationVisibility: LocationVisibility | null;
+  /**
+   * Coarse human-readable place name ("Malmö"), reverse-geocoded server-side.
+   * Never coordinates. Null when no location is set (or on backends predating
+   * the location-label change).
+   */
+  locationLabel: string | null;
   lastActiveAt: string | null;
 }
 
@@ -64,8 +70,13 @@ export interface UpdateProfileRequest {
 }
 
 export interface UpdateLocationRequest {
-  lat: number;
-  lng: number;
+  /**
+   * lat/lng come as a pair — both or neither. Omit the pair to change
+   * visibility only; the server keeps its stored coordinates (422 when no
+   * location was ever set).
+   */
+  lat?: number;
+  lng?: number;
   visibility?: LocationVisibility;
 }
 
