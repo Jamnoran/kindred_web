@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { discovery } from "../api/endpoints";
-import { errorMessage } from "../api/http";
+import { ApiError, errorMessage } from "../api/http";
 import type { DiscoveryCard, Factors, ReactionKind } from "../api/types";
 import { BlurhashImage } from "../components/BlurhashImage";
 import { GENDER_LABELS, RELATIONSHIP_STYLE_LABELS } from "../inclusivity";
@@ -14,14 +14,20 @@ export function DiscoveryPage() {
   const [error, setError] = useState<string | null>(null);
   const [match, setMatch] = useState<{ name: string; conversationId: number | null } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [needsProfile, setNeedsProfile] = useState(false);
 
   const loadDeck = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setNeedsProfile(false);
     try {
       setDeck(await discovery.deck(20));
     } catch (err) {
-      setError(errorMessage(err));
+      if (err instanceof ApiError && err.status === 404) {
+        setNeedsProfile(true);
+      } else {
+        setError(errorMessage(err));
+      }
     } finally {
       setLoading(false);
     }
@@ -79,7 +85,16 @@ export function DiscoveryPage() {
 
       {error && <p className="error">{error}</p>}
 
-      {!card && !loading && (
+      {needsProfile && (
+        <div className="card empty-state">
+          <div className="empty-state-emoji">👤</div>
+          <h2>Create your profile first</h2>
+          <p className="muted">Set up your profile to start discovering people nearby.</p>
+          <Link className="button" to="/profile">Create profile</Link>
+        </div>
+      )}
+
+      {!card && !loading && !needsProfile && (
         <div className="card empty-state">
           <div className="empty-state-emoji">💫</div>
           <h2>No one new right now</h2>

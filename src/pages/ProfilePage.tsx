@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { profile } from "../api/endpoints";
-import { errorMessage } from "../api/http";
+import { ApiError, errorMessage } from "../api/http";
 import type {
   Gender,
   Interest,
@@ -29,6 +29,7 @@ export function ProfilePage() {
   const [lookingFor, setLookingFor] = useState<string[]>([]);
   const [relationshipStyles, setRelationshipStyles] = useState<RelationshipStyle[]>([]);
   const [interests, setInterests] = useState<string[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -41,19 +42,28 @@ export function ProfilePage() {
   const [locSaved, setLocSaved] = useState(false);
 
   useEffect(() => {
-    Promise.all([profile.get(), profile.interests()])
+    Promise.all([
+      profile.get().catch((err) => {
+        if (err instanceof ApiError && err.status === 404) return null;
+        throw err;
+      }),
+      profile.interests(),
+    ])
       .then(([p, ints]) => {
-        setData(p);
         setAllInterests(ints);
-        setDisplayName(p.displayName ?? "");
-        setBio(p.bio ?? "");
-        setGender(p.gender);
-        setLookingFor(p.lookingFor ?? []);
-        setRelationshipStyles(p.relationshipStyles ?? []);
-        setInterests(p.interests ?? []);
-        if (p.locationVisibility) setVisibility(p.locationVisibility);
+        if (p) {
+          setData(p);
+          setDisplayName(p.displayName ?? "");
+          setBio(p.bio ?? "");
+          setGender(p.gender);
+          setLookingFor(p.lookingFor ?? []);
+          setRelationshipStyles(p.relationshipStyles ?? []);
+          setInterests(p.interests ?? []);
+          if (p.locationVisibility) setVisibility(p.locationVisibility);
+        }
       })
-      .catch((err) => setError(errorMessage(err)));
+      .catch((err) => setError(errorMessage(err)))
+      .finally(() => setLoaded(true));
   }, []);
 
   function toggle(list: string[], value: string, set: (v: string[]) => void) {
@@ -115,7 +125,7 @@ export function ProfilePage() {
     }
   }
 
-  if (!data && !error) return <div className="page-loading">Loading…</div>;
+  if (!loaded) return <div className="page-loading">Loading…</div>;
 
   return (
     <div className="page">
