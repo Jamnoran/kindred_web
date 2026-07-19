@@ -2,13 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { profile } from "../api/endpoints";
 import { ApiError, errorMessage } from "../api/http";
-import type {
-  Gender,
-  Interest,
-  LocationVisibility,
-  ProfileResponse,
-  RelationshipStyle,
-} from "../api/types";
+import type { Gender, Interest, ProfileResponse, RelationshipStyle } from "../api/types";
 import {
   GENDER_LABELS,
   GENDER_OPTIONS,
@@ -34,13 +28,6 @@ export function ProfilePage() {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  // location
-  const [lat, setLat] = useState("");
-  const [lng, setLng] = useState("");
-  const [visibility, setVisibility] = useState<LocationVisibility>("approximate");
-  const [locError, setLocError] = useState<string | null>(null);
-  const [locSaved, setLocSaved] = useState(false);
-
   useEffect(() => {
     Promise.all([
       profile.get().catch((err) => {
@@ -59,7 +46,6 @@ export function ProfilePage() {
           setLookingFor(p.lookingFor ?? []);
           setRelationshipStyles(p.relationshipStyles ?? []);
           setInterests(p.interests ?? []);
-          if (p.locationVisibility) setVisibility(p.locationVisibility);
         }
       })
       .catch((err) => setError(errorMessage(err)))
@@ -94,34 +80,6 @@ export function ProfilePage() {
       setError(errorMessage(err));
     } finally {
       setBusy(false);
-    }
-  }
-
-  function useMyLocation() {
-    setLocError(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLat(pos.coords.latitude.toFixed(5));
-        setLng(pos.coords.longitude.toFixed(5));
-      },
-      (err) => setLocError(err.message),
-    );
-  }
-
-  async function saveLocation(e: FormEvent) {
-    e.preventDefault();
-    setLocError(null);
-    setLocSaved(false);
-    try {
-      const p = await profile.updateLocation({
-        lat: Number(lat),
-        lng: Number(lng),
-        visibility,
-      });
-      setData(p);
-      setLocSaved(true);
-    } catch (err) {
-      setLocError(errorMessage(err));
     }
   }
 
@@ -225,42 +183,9 @@ export function ProfilePage() {
           Save profile
         </button>
       </form>
-
-      <h2>Location</h2>
-      <form className="card form" onSubmit={saveLocation}>
-        <p className="muted">
-          {data?.locationSet
-            ? `Location is set (visibility: ${data.locationVisibility ?? "unknown"}).`
-            : "No location set yet — discovery distance scoring needs one."}
-        </p>
-        <div className="row">
-          <label>
-            Latitude
-            <input value={lat} onChange={(e) => setLat(e.target.value)} placeholder="59.33" required />
-          </label>
-          <label>
-            Longitude
-            <input value={lng} onChange={(e) => setLng(e.target.value)} placeholder="18.06" required />
-          </label>
-        </div>
-        <button type="button" className="secondary" onClick={useMyLocation}>
-          Use my current location
-        </button>
-        <label>
-          Visibility
-          <select
-            value={visibility}
-            onChange={(e) => setVisibility(e.target.value as LocationVisibility)}
-          >
-            <option value="exact">Exact — show real distances</option>
-            <option value="approximate">Approximate — distances rounded to 5 km</option>
-            <option value="hidden">Hidden — excluded from distance features</option>
-          </select>
-        </label>
-        {locError && <p className="error">{locError}</p>}
-        {locSaved && <p className="notice">Location saved.</p>}
-        <button type="submit">Save location</button>
-      </form>
+      <p className="muted">
+        Looking for your location settings? They live on the Discover page now.
+      </p>
     </div>
   );
 }

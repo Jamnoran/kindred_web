@@ -87,6 +87,17 @@ changes.
   writes (open/polyamory ⇒ + non_monogamy) so ProfilePage adopts the response
   list after save (chips update themselves); preference filters are verbatim —
   don't "helpfully" pre-add the umbrella in the UI.
+- **Location is edited on the Discover page** (`LocationSection`), not the
+  profile — it changes as people move. Raw coordinates are never shown: device
+  geolocation or a city picked from the bundled gazetteer (`src/cities.ts` —
+  the backend has no geocoding endpoint, so city → lat/lng is resolved
+  client-side; diacritic-insensitive search). The server never echoes
+  coordinates back (`ProfileResponse` has only `locationSet`/`visibility`), so
+  a visibility-only change can auto-resave just with coords picked earlier in
+  the same session; otherwise it applies on the next location update. Saving
+  refetches the deck — DiscoveryPage's loading state must only replace the
+  deck area, never early-return the whole page, or LocationSection unmounts
+  mid-save and loses its editor state.
 - 404 on a conversation means "not a member or deleted" — indistinguishable
   by design; don't try to tell them apart in copy.
 - **Notification emails deep-link to `/conversations/{id}`** (backend

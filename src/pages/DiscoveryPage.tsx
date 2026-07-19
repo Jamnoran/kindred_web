@@ -4,6 +4,7 @@ import { discovery } from "../api/endpoints";
 import { ApiError, errorMessage } from "../api/http";
 import type { DiscoveryCard, Factors, ReactionKind } from "../api/types";
 import { BlurhashImage } from "../components/BlurhashImage";
+import { LocationSection } from "../components/LocationSection";
 import { GENDER_LABELS, RELATIONSHIP_STYLE_LABELS } from "../inclusivity";
 import { usePageTitle } from "../usePageTitle";
 
@@ -57,8 +58,6 @@ export function DiscoveryPage() {
     }
   }
 
-  if (loading && deck.length === 0) return <div className="page-loading">Loading…</div>;
-
   return (
     <div className="page">
       {match && (
@@ -83,7 +82,15 @@ export function DiscoveryPage() {
         </div>
       )}
 
+      {/* Location lives here (not on the profile) because it changes as you
+          move around; saving refetches the deck so distances stay honest. */}
+      <LocationSection onSaved={loadDeck} />
+
       {error && <p className="error">{error}</p>}
+
+      {/* The deck area alone goes into the loading state so the location
+          section doesn't unmount (and lose its editor state) on refetch. */}
+      {loading && deck.length === 0 && <div className="page-loading">Loading…</div>}
 
       {needsProfile && (
         <div className="card empty-state">

@@ -1189,3 +1189,68 @@ legend {
   flex-direction: column;
   gap: 0.35rem;
 }
+
+/* ---------- location section (discovery page) ---------- */
+
+.location-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.7rem 1.1rem;
+  margin-bottom: 1rem;
+  border-radius: 14px;
+}
+
+.location-card {
+  margin-bottom: 1rem;
+}
+
+.location-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.autocomplete {
+  position: relative;
+}
+
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin-top: 0.3rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.autocomplete-list button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--text);
+  font-weight: 500;
+  min-height: 0;
+  padding: 0.55rem 0.85rem;
+}
+
+.autocomplete-list button:hover:not(:disabled),
+.autocomplete-list button:focus-visible {
+  background: var(--accent-soft);
+  transform: none;
+  box-shadow: none;
+  outline: none;
+}
